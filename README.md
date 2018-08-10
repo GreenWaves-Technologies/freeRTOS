@@ -1,10 +1,9 @@
-**FreeRTOS**
-========
+# FreeRTOS
 
 This is a port of FreeRTOS( v. 10.0.1 ) to the RISC-V based GAP8, IoT Application Processor by [GreenWaves-Technologies](https://greenwaves-technologies.com).
 
-About FreeRTOS
---------------
+## About FreeRTOS
+
 FreeRTOS is an RTOS designed for small and resource constrained microcontrollers, issued under MIT license. It was developed and maintened, since 2003, by Richard Barry and his Real Time Engineers Ltd. It is now under the aegis of [Amazon Web Services](https://aws.amazon.com/blogs/opensource/announcing-freertos-kernel-v10/) and became Amazon FreeRTOS since 2017. FreeRTOS still remains available under MIT license.
 Light and easily configurable, it supports multi-tasking, various synchronisation mechanism and communication between tasks, and many others features. You may refer to the official website to learn more about [FreeRTOS and its features](https://www.freertos.org/FreeRTOS_Features.html).
 
@@ -16,8 +15,7 @@ port.c
 portmacro.h
 ```
 
-Getting Started
----------------
+## Getting Started
 
 The FreeRTOS project is organised as follows :
 ```bash
@@ -33,8 +31,7 @@ There are several demos and examples available to present FreeRTOS' and GAPUINO'
 Those demos can be found in the [*gap_sdk*](https://github.com/GreenWaves-Technologies/gap_sdk/tree/master/examples).
 
 
-API Reference and Documentation
--------------------------------
+## API Reference and Documentation
 
 For detailed documentation and FAQ on Amazon FreeRTOS, refer to the [Amazon FreeRTOS User Guide](https://aws.amazon.com/documentation/freertos)  or [ FreeRTOS FAQ](https://www.freertos.org/FAQ.html) about FreeRTOS Kernel.
 
