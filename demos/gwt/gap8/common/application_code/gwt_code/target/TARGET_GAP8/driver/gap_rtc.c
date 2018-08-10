@@ -469,7 +469,7 @@ void RTC_Init(RTC_APB_Type *base, const rtc_config_t *Config)
     SOC_EU_SetFCMask(RTC_APB_EVENT);
     SOC_EU_SetFCMask(RTC_EVENT);
 
-    RTC_Reset(base);
+    //RTC_Reset(base);
 
     RTC_SetClockDiv(base, Config->clkDiv);
 

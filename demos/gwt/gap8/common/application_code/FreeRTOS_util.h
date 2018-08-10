@@ -66,7 +66,9 @@ void vApplicationIdleHook( void );
 #endif //configUSE_IDLE_HOOK
 
 #if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if configUSE_MALLOC_FAILED_HOOK == 1
 void vApplicationMallocFailedHook( void );
+#endif //configUSE_MALLOC_FAILED_HOOK
 #endif //configSUPPORT_DYNAMIC_ALLOCATION
 
 #if ( configCHECK_FOR_STACK_OVERFLOW == 1 ) || ( configCHECK_FOR_STACK_OVERFLOW == 2 )
@@ -80,7 +82,9 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
 #endif //configSUPPORT_STATIC_ALLOCATION
 
 #if configUSE_TIMERS == 1
+#if configUSE_DAEMON_TASK_STARTUP_HOOK == 1
 void vApplicationDaemonTaskStartupHook( void );
+#endif //configUSE_DAEMON_TASK_STARTUP_HOOK
 
 #if configSUPPORT_STATIC_ALLOCATION == 1
 void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,

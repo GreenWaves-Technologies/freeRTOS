@@ -35,7 +35,7 @@
 
 /* GAP specific includes. */
 #include "gap_fc_malloc.h"
-#include "hyper_io.h"
+#include "hyperbus_io.h"
 
 /*!
  * @addtogroup filesystem_read_only
@@ -91,7 +91,7 @@ typedef struct _fs_handle_s
     uint32_t fs_l2_size;
     uint32_t *fs_info;
     uint32_t nb_comps;
-    unsigned char *fs_cache;
+    uint8_t *fs_cache;
     uint32_t fs_cache_addr;
     fs_device_e fs_device;
 } fs_handle_t;
@@ -141,7 +141,7 @@ void fs_config_default( fs_config_t *fs_config );
  *
  * @return A pointer to the mounted filesystem.
  */
-fs_handle_t *fs_mount( uint8_t device, fs_config_t *fs_config );
+uint32_t fs_mount( fs_handle_t *fs, uint8_t device, fs_config_t *fs_config );
 
 /*!
  * @brief Unmount a filesystem.

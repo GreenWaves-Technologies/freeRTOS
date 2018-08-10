@@ -32,15 +32,12 @@
 
 #include "gap_fs.h"
 
-#ifdef __FREERTOS__
-#include "FreeRTOS.h"
-#define malloc pvPortMalloc
-#define free   vPortFree
-#endif
-
 /*******************************************************************************
  * Definitions and variables
  ******************************************************************************/
+static uint8_t cache[FS_READ_THRESHOLD_BLOCK_FULL];
+static uint32_t info[32];
+
 static int  __fs_read_from_cache( fs_file_t *file, uint32_t addr, uint32_t size, uint32_t buffer );
 static int  __fs_read_block     ( fs_file_t *file, uint32_t addr, uint32_t size, uint32_t buffer );
 static int  __fs_read_cached    ( fs_file_t *file, uint32_t addr, uint32_t size, uint32_t buffer );
@@ -55,23 +52,18 @@ void fs_config_default( fs_config_t *fs_config )
     fs_config->fs_type = GAP_FS_READ_ONLY;
 }
 
-fs_handle_t *fs_mount( uint8_t device, fs_config_t *fs_config )
+uint32_t fs_mount( fs_handle_t *fs, uint8_t device, fs_config_t *fs_config )
 {
-    if( fs_config == NULL )
-        return NULL;
+    if( ( fs_config == NULL ) || ( fs == NULL ) )
+        return GAP_FS_MOUNT_ERROR;
 
-    fs_handle_t *fs = ( fs_handle_t * ) malloc( sizeof( fs_handle_t ) );
-    if( fs == NULL )
-        return NULL;
     fs->fs_size = 0;
     fs->fs_l2_offset = 0;
     fs->fs_l2_size = 0;
     fs->fs_info = NULL;
     fs->fs_cache_addr = 0;
-    fs->fs_cache = NULL;
-    fs->fs_cache = ( uint8_t * ) malloc( sizeof( FS_READ_THRESHOLD_BLOCK_FULL ) );
-    if( fs->fs_cache == NULL )
-        return NULL;
+    fs->fs_cache = cache;
+
     fs->fs_device = device;
 
     uint32_t fs_size = 0;
@@ -82,32 +74,26 @@ fs_handle_t *fs_mount( uint8_t device, fs_config_t *fs_config )
         /* Initialize device. */
         HYPERBUS_IO_Init( uHYPERBUS_Flash );
         /* Get offset of filesystem header */
-        HYPERBUS_IO_Read( 0x00, 4, &(fs->fs_l2_offset) );
+        HYPERBUS_IO_Read( 0x00, 4, &(fs->fs_l2_offset), uHYPERBUS_Flash, uHYPERBUS_Mem_Access );
         /* Get header size. */
-        HYPERBUS_IO_Read( fs->fs_l2_offset, 4, &(fs->fs_l2_size) );
+        HYPERBUS_IO_Read( fs->fs_l2_offset, 4, &(fs->fs_l2_size), uHYPERBUS_Flash, uHYPERBUS_Mem_Access );
 
         fs_size = ( ( fs->fs_l2_size + 3 ) & ~0x03 );
         fs_offset = fs->fs_l2_offset;
-        fs->fs_info = ( uint32_t * ) malloc( fs_size );
-        if( fs->fs_info == NULL )
-            return NULL;
-        HYPERBUS_IO_Read( fs_offset + 4, fs_size, fs->fs_info );
+        fs->fs_info = info;
+
+        HYPERBUS_IO_Read( fs_offset + 4, fs_size, fs->fs_info, uHYPERBUS_Flash, uHYPERBUS_Mem_Access );
         break;
     default:
-        return NULL;
+        return GAP_FS_MOUNT_ERROR;
     }
-
-    return fs;
+    return GAP_FS_OK;
 }
 
 void fs_unmount( fs_handle_t *fs )
 {
     if( fs != NULL )
     {
-        if( fs->fs_cache != NULL )
-            free( fs->fs_cache );
-        if( fs->fs_info != NULL )
-            free( fs->fs_info );
         switch( fs->fs_device )
         {
         case fs_HYPER :
@@ -115,7 +101,6 @@ void fs_unmount( fs_handle_t *fs )
         default :
             break;
         }
-        free( fs );
     }
 }
 
@@ -250,7 +235,7 @@ static int __fs_read_block( fs_file_t *file, uint32_t addr, uint32_t size, uint3
     switch( file->fs->fs_device )
     {
     case fs_HYPER :
-        return HYPERBUS_IO_Read( addr, size, ( void * ) buffer );
+        return HYPERBUS_IO_Read( addr, size, ( void * ) buffer, uHYPERBUS_Flash, uHYPERBUS_Mem_Access );
 
     default:
         return 0;

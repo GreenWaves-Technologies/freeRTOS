@@ -65,8 +65,6 @@ void vApplicationIdleHook( void )
     nbTasks--;
 #endif
     taskSuspended = 0;
-    /* printf("\n%s : NBTASKS = %ld\t TICK = %ld\n", */
-    /*        taskname, nbTasks, xTaskGetTickCount()); */
     for( uint32_t i = 0; i < nbTasks-1; i++ )
     {
 	taskState = eTaskGetState( tasks[i] );
@@ -75,7 +73,6 @@ void vApplicationIdleHook( void )
             ( taskState == eReady ) ||
             ( taskState == eBlocked ) )
             taskReRuBl++;
-	//printf("%s\t state = %d\n", pcTaskGetName( tasks[i] ), taskState );
     }
     if( taskReRuBl == 0 )
     {
@@ -95,6 +92,7 @@ void vApplicationIdleHook( void )
 /*-----------------------------------------------------------*/
 
 #if configSUPPORT_DYNAMIC_ALLOCATION == 1
+#if configUSE_MALLOC_FAILED_HOOK == 1
 void vApplicationMallocFailedHook( void )
 {
     /*
@@ -116,6 +114,7 @@ void vApplicationMallocFailedHook( void )
     for( ;; );
     */
 }
+#endif //configUSE_MALLOC_FAILED_HOOK
 #endif //configSUPPORT_DYNAMIC_ALLOCATION
 /*-----------------------------------------------------------*/
 
@@ -174,12 +173,15 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
 
 
 #if configUSE_TIMERS == 1
+
+#if configUSE_DAEMON_TASK_STARTUP_HOOK == 1
 void vApplicationDaemonTaskStartupHook( void )
 {
     /*
       This function is executed once when schedular starts.
      */
 }
+#endif //configUSE_DAEMON_TASK_STARTUP_HOOK
 /*-----------------------------------------------------------*/
 
 #if configSUPPORT_STATIC_ALLOCATION == 1
