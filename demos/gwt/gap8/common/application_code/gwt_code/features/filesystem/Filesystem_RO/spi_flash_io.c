@@ -195,7 +195,9 @@ void SPI_FLASH_Deinit( void )
 
 int32_t SPI_FLASH_Erase( uint32_t addr, uint32_t size )
 {
-    int32_t prvSize = ( size / ( 64 * 1024 ) ) ? ( size / ( 64 * 1024 ) ) : 1;
+    int32_t prvSize = ( size / ( 64 * 1024 ) );
+    if( !prvSize )
+        prvSize = 1;
     uint32_t prvAddr = addr;
 
     do
@@ -246,7 +248,9 @@ int32_t SPI_FLASH_Erase( uint32_t addr, uint32_t size )
 
 int32_t SPI_FLASH_Write( uint32_t addr, uint32_t size, void *buf )
 {
-    int32_t prvSize = ( size / 512 ) ? ( size / 512 ) : 1;
+    int32_t prvSize = ( size / 512 );
+    if( !prvSize )
+        prvSize = 1;
     uint32_t prvAddr = addr;
     uint8_t *prvBuffer = ( uint8_t * ) buf;
     do
