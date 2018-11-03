@@ -52,7 +52,7 @@ extern "C" {
 #define AUTOTILE_CLUSTER_CoresFork(a,b,c)                   CLUSTER_CoresFork(b,c)
 
 #define rt_team_barrier()                                   CLUSTER_SynchBarrier()
-#define rt_nb_pe()                                          CORE_NUMBER
+#define rt_nb_pe()                                          8
 #define rt_core_id()                                        __core_ID()
 
 #if defined(__cplusplus)
