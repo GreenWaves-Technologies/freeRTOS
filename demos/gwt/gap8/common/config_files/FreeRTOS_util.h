@@ -56,10 +56,11 @@ extern uint8_t taskSuspended;
 /****************************************************************************/
 
 /* Variables used. */
+#ifdef NOSTDMALLOC
 extern HeapRegion_t xHeapRegions[];
+#endif
 
 /****************************************************************************/
-
 
 #if configUSE_IDLE_HOOK == 1
 void vApplicationIdleHook( void );

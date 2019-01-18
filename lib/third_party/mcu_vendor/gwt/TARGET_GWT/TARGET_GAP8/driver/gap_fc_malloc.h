@@ -41,56 +41,72 @@
  */
 
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
-#if defined(__cplusplus)
-extern "C" {
-#endif /* __cplusplus */
 
 /* FC heap */
-extern char  __heapfcram_start;
-extern char  __heapfcram_size;
+extern char __heapfcram_start; /*!< FC Heap start address. */
+extern char __heapfcram_size;  /*!< FC Heap size. */
 
-#if defined(__cplusplus)
-}
-#endif /* __cplusplus */
+/* FC Free fucntion alias */
+#define FC_Free     FC_MallocFree
+
 
 /*******************************************************************************
  * APIs
  ******************************************************************************/
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
 
 /*!
- * @name Initialization and deinitialization
- * @{
- */
-
-/*!
  * @brief Initializes the fc malloc.
  *
- * @note .
+ * @note This is will bind the FC heap start and stop address to the inner stucture malloc_t __fc_malloc,
+ *        It will record the allocation information of FC heap
  */
 void FC_MallocInit();
 
+/*!
+ * @brief Allocate memory from fc malloc.
+ *
+ * @note Allocate the memory according to the size and return the address pointer.
+ *
+ * @param size Memory allocation size.
+ *
+ * @return memory address pointer.
+ *
+ */
 void *FC_Malloc(int size);
 
+/*!
+ * @brief Allocate the fc heap memory with aligned size.
+ *
+ * @param size  Memory allocation size.
+ * @param align Memory allocation align size.
+ *
+ * @return memory address pointer.
+ *
+ */
 void *FC_MallocAlign(int size, int align);
 
 /*!
  * @brief Free the fc malloc.
  *
- * @note .
+ * @note Free the memory pointed by the _chunk
+ *
+ * @param _chunk Address of memory need to free.
+ * @param size  Size of memory need to free.
+ *
  */
 void FC_MallocFree(void *_chunk, int size);
 
-
-/* @} */
 
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
 
 /* @} */
+
 #endif /*_GAP_FC_MALLOC_H_*/

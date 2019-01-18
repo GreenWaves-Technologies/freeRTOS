@@ -20,11 +20,14 @@ portmacro.h
 The FreeRTOS project is organised as follows :
 ```bash
 freeRTOS
-|-lib
-|   |-FreeRTOS    <- Contains FreeRTOS kernel source code, and the port source files
-|   |-include     <- Contains FreeRTOS kernel headers and macros
-|-demos
-|   |-gwt         <- Contains drivers and GAPUINO features code
+├── demos
+|   └── gwt                     <- Contains a "Hello World" demo
+└── lib
+    ├── FreeRTOS                <- Contains FreeRTOS kernel source code, and port source files
+    ├── include                 <- Contains FreeRTOS kernel headers and macros
+    └── third_party
+        └── mcu_vendor/gwt      <- Contains drivers and GAPUINO features code
+
 ```
 
 There are several demos and examples available to present FreeRTOS' and GAPUINO's features.

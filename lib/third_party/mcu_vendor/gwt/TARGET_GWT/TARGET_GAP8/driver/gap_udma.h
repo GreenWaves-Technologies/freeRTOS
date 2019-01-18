@@ -65,10 +65,10 @@ typedef enum _UDMARequest{
 /*! @brief uDMA transfer control */
 typedef enum _UDMACtrl{
     UDMA_CTRL_NORMAL    = 0,   /*!< Channel Transfer without wait */
-    UDMA_CTRL_HYPERBUS  = 1,   /*!< Channel TX Transfer with wait */
-    UDMA_CTRL_TCDM      = 2,   /*!< Channel RX Transfer without wait */
+    UDMA_CTRL_HYPERBUS  = 1,   /*!< Channel special Transfer with wait */
+    UDMA_CTRL_DMACPY    = 2,   /*!< Channel special Transfer without wait */
     UDMA_CTRL_DUAL_RX   = (1 << 4),  /*!< Channel RX Transfer without wait */
-    UDMA_CTRL_DUAL_TX   = (2 << 4),  /*!< Channel RX Transfer without wait */
+    UDMA_CTRL_DUAL_TX   = (2 << 4),  /*!< Channel TX Transfer without wait */
     UDMA_CTRL_HYPERBUS_CAN_ENQUEUE  = (3 << 4 | UDMA_CTRL_HYPERBUS),  /*!< Channel HYPERBUS enqueue check */
     UDMA_CTRL_HYPERBUS_CAN_NOT_ENQUEUE  = (4 << 4 | UDMA_CTRL_HYPERBUS),  /*!< Channel HYPERBUS enqueue check */
 } UDMACtrl;
@@ -203,12 +203,31 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
  *
  * @param base The UDMA channel base pointer.
  * @param req  The UDMA request.
- * @param hint The UDMA usage hint.
  * @return status of status_t.
  * @note .
  */
-status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req, UDMAHint hint);
+status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req);
 
+
+/*!
+ * @brief Abort a uDMA send transfer.
+ *
+ * This function will abort a UDMA transfer and delete the TX request from request pool
+ *
+ * @param base The UDMA channel base pointer.
+ * @note .
+ */
+status_t UDMA_AbortSend(UDMA_Type *base);
+
+/*!
+ * @brief Abort a uDMA receive transfer.
+ *
+ * This function will abort a UDMA transfer and delete the RX request from request pool
+ *
+ * @param base The UDMA channel base pointer.
+ * @note .
+ */
+status_t UDMA_AbortReceive(UDMA_Type *base);
 
 /*!
  * @brief UDMA channel event interrupt handler.
@@ -217,18 +236,18 @@ status_t UDMA_SendRequest(UDMA_Type *base, udma_req_t *req, UDMAHint hint);
  * then exeute next request.
  *
  * @param index The UDMA channel index.
+ * @param abort Indicate the abort of dedicate UDMA channel.
  * @note .
  */
-void UDMA_EventHandler(uint32_t index);
+void UDMA_EventHandler(uint32_t index, int abort);
 
 
 /*!
- * @brief WAIT the udma channel transfer end.
+ * @brief Wait the udma channel transfer end, for blocking transfer.
  *
- * @param req The UDMA request.
  * @note .
  */
-void UDMA_WaitRequestEnd(udma_req_t *req);
+void UDMA_BlockWait();
 
 /* @} */
 
@@ -240,22 +259,14 @@ void UDMA_WaitRequestEnd(udma_req_t *req);
  */
 
 /*!
- * @brief UDMA wait auto polling end
- *
- * @param base The UDMA channel.
- * @note .
- */
-void UDMA_AutoPollingWait(UDMA_Type *base);
-
-/*!
  * @brief Get UDMA TX channel busy state.
  *
  * @param base The UDMA channel.
  * @note .
  */
-static inline int UDMA_TxBusy(UDMA_Type *base)
+static inline int UDMA_TXBusy(UDMA_Type *base)
 {
-    return (base->TX_CFG & UDMA_CFG_EN_MASK);
+    return ((base->TX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
 }
 
 /*!
@@ -264,9 +275,53 @@ static inline int UDMA_TxBusy(UDMA_Type *base)
  * @param base The UDMA channel.
  * @note .
  */
-static inline int UDMA_RxBusy(UDMA_Type *base)
+static inline int UDMA_RXBusy(UDMA_Type *base)
 {
-    return (base->RX_CFG & UDMA_CFG_EN_MASK);
+    return ((base->RX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
+}
+
+/*!
+ * @brief Get UDMA TX channel pending state.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_TXPending(UDMA_Type *base)
+{
+    return ((base->TX_CFG & UDMA_CFG_PENDING_MASK) >> UDMA_CFG_PENDING_SHIFT);
+}
+
+/*!
+ * @brief Get UDMA RX channel pending state.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_RXPending(UDMA_Type *base)
+{
+    return ((base->RX_CFG & UDMA_CFG_PENDING_MASK) >> UDMA_CFG_PENDING_SHIFT);
+}
+
+/*!
+ * @brief Get UDMA TX channel transfer left size which has not been transfered.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_TXRemainBytes(UDMA_Type *base)
+{
+    return (base->TX_SIZE & UDMA_SIZE_SIZE_MASK);
+}
+
+/*!
+ * @brief Get UDMA RX channel transfer left size which has not been transfered.
+ *
+ * @param base The UDMA channel.
+ * @note .
+ */
+static inline int UDMA_RXRemainBytes(UDMA_Type *base)
+{
+    return (base->RX_SIZE & UDMA_SIZE_SIZE_MASK);
 }
 
 /*!

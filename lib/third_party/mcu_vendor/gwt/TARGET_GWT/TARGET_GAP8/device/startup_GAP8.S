@@ -57,8 +57,8 @@
 	.extern __data_start__
 	.extern __bss_start__
 	.extern __bss_end__
-	.extern fc_os_stack
-	.extern FC_CLUSTER_ID
+        .extern __fc_bss_start__
+  	.extern __fc_bss_end__
 
 	.extern CLUSTER_SleepWait
 	.extern SystemInit

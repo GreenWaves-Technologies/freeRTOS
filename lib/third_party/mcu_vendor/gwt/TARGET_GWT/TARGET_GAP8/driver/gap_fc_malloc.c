@@ -8,10 +8,19 @@
  * Authors: Eric Flamand, GreenWaves Technologies (eric.flamand@greenwaves-technologies.com)
  *          Germain Haugou, ETH (germain.haugou@iis.ee.ethz.ch)
  */
+
 #include <stdint.h>
 #include "gap_fc_malloc.h"
 
-malloc_t __fc_malloc;
+/*******************************************************************************
+ * Variables, macros, structures,... definition
+ ******************************************************************************/
+
+static malloc_t __fc_malloc; /* FC memory allocator. */
+
+/*******************************************************************************
+ * Function definition
+ ******************************************************************************/
 
 void *FC_Malloc(int size)
 {

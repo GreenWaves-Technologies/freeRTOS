@@ -47,8 +47,9 @@ task.h is included from an application file. */
 /* Setup timer to enable Systick interruptions. */
 void prvSetupTimerInterrupt( void );
 
+#if portUSING_MPU_WRAPPERS == 1
 /* Setup MPU. */
-static void prvSetupMPU( void ) PRIVILEGED_FUNCTION;
+void prvSetupMPU( void ) PRIVILEGED_FUNCTION;
 
 /*
  * Checks to see if being called from the context of an unprivileged task, and
@@ -57,16 +58,15 @@ static void prvSetupMPU( void ) PRIVILEGED_FUNCTION;
  */
 BaseType_t xPortRaisePrivilege( void );
 
-/*
- * Reset privilege level after call to xPortRaisePrivilege().
- */
+/* Reset privilege level after call to xPortRaisePrivilege(). */
 void vPortResetPrivilege( BaseType_t xRunningPrivileged );
+#endif //portUSING_MPU_WRAPPERS == 1
 
 /* Scheduler utilities. */
 
 /* Critical sections management. */
 void vPortEnter_Critical( void );
-void VPortExit_Critical( void );
+void vPortExit_Critical( void );
 uint32_t uPortSet_Interrupt_Mask_From_ISR( void );
 void vPortClear_Interrupt_Mask_From_ISR( uint32_t irqSet );
 
@@ -78,23 +78,27 @@ volatile uint32_t ulCriticalNesting = 9999ul;
 
 /*
  * ulCriticalNesting : not necessary.
- * void vPortEnter_Critical( void ), void VPortExit_Critical( void )
+ * void vPortEnter_Critical( void ), void vPortExit_Critical( void )
  * Both functions are not needed. Functions defined in tasks.c,
  * portCRITICAL_NESTING_IN_TCB must be set to 1 in order to track nesting
  * in Task Control Block.
  * Refer to l. 269, 4068, 4098 in tasks.c.
  *
  * If portCRITICAL_NESTING_IN_TCB 1 defined, no need of ulCriticalNesting,
- * neither void vPortEnter_Critical( void ), void VPortExit_Critical( void ) to
+ * neither void vPortEnter_Critical( void ), void vPortExit_Critical( void ) to
  * be defined.
  */
+
+/* ISR Stack of 1kB. */
+extern uint8_t __irq_stack_start__;
+StackType_t *xISRStack = ( StackType_t * ) &__irq_stack_start__;
 
 
 /*-----------------------------------------------------------*/
 /*
  * See header file for description.
  */
-#if portUSING_MPU_WRAPPERS && portUSING_MPU_WRAPPERS == 1
+#if portUSING_MPU_WRAPPERS == 1
 StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack,
 				    TaskFunction_t pxCode,
 				    void *pvParameters,
@@ -103,12 +107,16 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack,
 StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack,
 					TaskFunction_t pxCode,
 					void *pvParameters )
-#endif // portUSING_MPU_WRAPPERS && portUSING_MPU_WRAPPERS == 1
+#endif //portUSING_MPU_WRAPPERS == 1
 {
     /* Few bytes on the bottom of the stack. May be useful for debugging. */
     pxTopOfStack--;
     *pxTopOfStack = 0xdeedfeed;
 
+    /* Hardware Loop registers. */
+    {
+        pxTopOfStack -= 6;
+    }
     /* Control and status registers saved if R/W. */
     {
 	pxTopOfStack--;
@@ -118,7 +126,7 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack,
     {
 	pxTopOfStack -= 27; /* a1-a7 + t0-t6 +  s0-11 */
 	*pxTopOfStack = ( StackType_t ) pvParameters; /* a0 */
-	pxTopOfStack -= 3; /* ra + gp + tp */
+	pxTopOfStack -= 1; /* ra */
     }
 
 /*
@@ -140,6 +148,8 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack,
  * *    s11   *
  * *----------*
  * *   CSR    *
+ * *----------*
+ * * HW loop  *
  * *==========*
  * * deedfeed *
  * ************
@@ -179,7 +189,8 @@ void prvSetupTimerInterrupt( void )
 }
 /*-----------------------------------------------------------*/
 
-static void prvSetupMPU( void )
+#if portUSING_MPU_WRAPPERS == 1
+void prvSetupMPU( void )
 {
     uint32_t	base_l2	 = ( 0x1C000000ul );
     uint32_t	base_fc	 = FC_BASE;
@@ -292,44 +303,22 @@ static void prvSetupMPU( void )
 }
 /*-----------------------------------------------------------*/
 
-BaseType_t xPortRaisePrivilege( void )
-{
-    uint32_t ulPrvlvl = 0;
-    __asm__ volatile( "csrr %0, 0xc10" : "=r"( ulPrvlvl ) );
-    if( ( ulPrvlvl & 0x00000003 ) == 0 )
-    {
-	ulPrvlvl += 3; /* Raise privilege to Machine mode. */
-	__asm__ volatile( "csrw 0xc10, %0" :: "r"( ulPrvlvl ) );
-	return 0;
-    }
-    else
-	return 1;
-}
-/*-----------------------------------------------------------*/
-
-void vPortResetPrivilege( BaseType_t xRunningPrivileged )
-{
-    if( xRunningPrivileged == 0)
-    {
-	__asm__ volatile(
-	    "csrsi 0xc10, 0x01 \n\t"
-	    "csrsi 0xc10, 0x00 \n\t"
-	    );
-    }
-}
-
-/*-----------------------------------------------------------*/
-
-#if portUSING_MPU_WRAPPERS && portUSING_MPU_WRAPPERS == 1
 void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings,
 				const struct xMEMORY_REGION * const xRegions,
 				StackType_t *pxBottomOfStack,
 				uint32_t ulStackDepth )
 {
     uint8_t ucIndex = 0;
+    uint32_t	base_l2	 = ( 0x1C000000ul );
 
     /* Store MPU Settings of a task inside its Task Control Block. */
-    if( xRegions != NULL )
+    if( xRegions == NULL )
+    {
+        xMPUSettings->xRegions[0].ulRegionBaseAddress = base_l2;
+        xMPUSettings->xRegions[0].ulRegionSize = 0x2000;
+        xMPUSettings->xRegions[0].ucRegionArea = GAP_MPU_L2_L2_AREA;
+    }
+    else
     {
 	for( ucIndex = 0; ucIndex < portNUM_CONFIGURABLE_REGIONS; ucIndex++ )
 	{
@@ -345,7 +334,19 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS *xMPUSettings,
 	}
     }
 }
-#endif //portUSING_MPU_WRAPPERS && portUSING_MPU_WRAPPERS == 1
+/*-----------------------------------------------------------*/
+
+BaseType_t xPortRaisePrivilege( void )
+{
+    return 1;
+}
+/*-----------------------------------------------------------*/
+
+void vPortResetPrivilege( BaseType_t xRunningPrivileged )
+{
+    ( void ) xRunningPrivileged;
+}
+#endif //portUSING_MPU_WRAPPERS == 1
 /*-----------------------------------------------------------*/
 
 void vPortEnter_Critical( void )
@@ -374,8 +375,8 @@ void vPortExit_Critical( void )
 uint32_t uPortSet_Interrupt_Mask_From_ISR( void )
 {
     uint32_t ulIrqMask = 0;
-    portDISABLE_INTERRUPTS();
     /* Disable all other interrupts. */
+    portDISABLE_INTERRUPTS();
     __asm__ volatile("csrr %0, mstatus":"=r" (ulIrqMask) );
     return ulIrqMask;
 }
@@ -384,7 +385,5 @@ uint32_t uPortSet_Interrupt_Mask_From_ISR( void )
 void vPortClear_Interrupt_Mask_From_ISR( uint32_t irqSet )
 {
     portENABLE_INTERRUPTS();
-    //__asm__ volatile("csrsi mstatus, 3");
-    //( NVIC->MASK_IRQ_OR ) = irqSet;
 }
 /*-----------------------------------------------------------*/

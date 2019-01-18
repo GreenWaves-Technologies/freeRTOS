@@ -41,7 +41,7 @@
   bit4 : PICL_OK
   bit5 : SCU_OK
 */
-GAP_FC_DATA uint32_t pmu_events_status;
+uint32_t pmu_events_status;
 
 uint32_t    PMU_Sleep_Ctrl;
 pmu_state_t PMU_State = {0, 0, {0, 0, 0, 0}, {0, 0}};
@@ -105,7 +105,7 @@ static uint32_t PMU_ChangeRegulatorState(pmu_system_state_t prev_state, pmu_syst
 
         /* Wait for clock gate done event */
         while ((pmu_events_status & PMU_EVENT_SCU_OK) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_SCU_OK));
 
@@ -195,7 +195,7 @@ void PMU_DeInit(int retentive, pmu_system_state_t wakeup_state)
 
     if (retentive) {
         PMU_Sleep_Ctrl |= PMU_CTRL_SLEEP_CTRL_BOOT_L2(uPMU_BOOT_FROM_L2) |
-                          PMU_CTRL_SLEEP_CTRL_REBOOT(uPMU_RETENTIVE_BOOT);
+                          PMU_CTRL_SLEEP_CTRL_REBOOT(uPMU_RETENTIVE_SLEEP_BOOT);
     } else {
         PMU_Sleep_Ctrl |= PMU_CTRL_SLEEP_CTRL_BOOT_L2(uPMU_BOOT_FROM_ROM) |
                           PMU_CTRL_SLEEP_CTRL_REBOOT(uPMU_DEEP_SLEEP_BOOT);
@@ -220,7 +220,7 @@ int PMU_StateSwitch(pmu_switch_state_t state, pmu_switch_mode_t mode) {
     /* Need retentive or not */
     if (state == uPMU_SWITCH_DEEP_SLEEP)
         retentive = 0;
-    else if (state == uPMU_SWITCH_SLEEP)
+    else if (state == uPMU_SWITCH_RETENTIVE_SLEEP)
         retentive = 1;
 
     /* PMU shutdown, change state and set wakeup state */
@@ -315,7 +315,7 @@ void PMU_ClusterPowerOn() {
             /* Wait for clock gate done event */
             while ((pmu_events_status & PMU_EVENT_CLUSTER_CLOCK_GATE) ==  0)
             {
-                EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+                EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
             }
             pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_CLOCK_GATE));
         }
@@ -327,7 +327,7 @@ void PMU_ClusterPowerOn() {
 
         /* Wait for TRC OK event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_ON_OFF) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_ON_OFF));
 
@@ -346,7 +346,7 @@ void PMU_ClusterPowerOn() {
 
         /* Wait for clock gate done event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_CLOCK_GATE) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_CLOCK_GATE));
 
@@ -385,7 +385,7 @@ void PMU_ClusterPowerOff() {
         /* Wait for clock gate done event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_CLOCK_GATE) ==  0)
         {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_CLOCK_GATE));
 
@@ -403,7 +403,7 @@ void PMU_ClusterPowerOff() {
 
         /* Wait for TRC OK event */
         while ((pmu_events_status & PMU_EVENT_CLUSTER_ON_OFF) == 0) {
-            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIF_EVENT);
+            EU_EVT_MaskWaitAndClr(1 << FC_SW_NOTIFY_EVENT);
         }
         pmu_events_status = pmu_events_status & (~(PMU_EVENT_CLUSTER_ON_OFF));
 
@@ -422,5 +422,5 @@ void PMU_IRQHandler(uint32_t num)
 {
     pmu_events_status |= 1 << (num - PMU_EVENT_CLUSTER_POWER_ON);
 
-    EU_SW_EVENTS_DEMUX->TRIGGER_SET[FC_SW_NOTIF_EVENT] = 0xFFFFFFFF;
+    EU_SW_EVENTS_DEMUX->TRIGGER_SET[FC_SW_NOTIFY_EVENT] = 0xFFFFFFFF;
 }

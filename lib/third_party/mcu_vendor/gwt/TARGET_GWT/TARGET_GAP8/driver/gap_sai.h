@@ -32,145 +32,107 @@
 #define _GAP_SAI_H_
 
 #include "gap_common.h"
-#include "PinNames.h"
 #include "gap_udma.h"
+#include "pinmap.h"
 
 /*!
- * @addtogroup sai
+ * @addtogroup SAI
  * @{
  */
+
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
-typedef struct i2s_s i2s_t;
 
-/*! @name Driver version */
-/*@{*/
-#define GAP_SAI_DRIVER_VERSION (MAKE_VERSION(1, 0, 0)) /*!< Version 1.0.0 */
-/*@}*/
-
-/*! @brief Status for the SAI driver.*/
+/*! @brief SAI module status. */
 enum _sai_status_t
 {
-    uStatus_SAI_Error_RX = MAKE_STATUS(uStatusGroup_SAI, 0),
-    uStatus_SAI_Idle_RX  = MAKE_STATUS(uStatusGroup_SAI, 1),
-    uStatus_SAI_Busy_RX  = MAKE_STATUS(uStatusGroup_SAI, 2),
-    uStatus_SAI_Done_RX  = MAKE_STATUS(uStatusGroup_SAI, 3)
+    uStatus_SAI_Idle  = MAKE_STATUS(uStatusGroup_SAI, 0), /*!< SAI module idle. */
+    uStatus_SAI_Busy  = MAKE_STATUS(uStatusGroup_SAI, 1), /*!< SAI module busy with a transfer. */
+    uStatus_SAI_Error = MAKE_STATUS(uStatusGroup_SAI, 2)  /*!< Error received during transfer. */
 };
 
-/*! @brief Status for transfer, may be used for polling.*/
+/*! @brief SAI transfer state. */
 enum _sai_transfer_status
 {
-    uSAI_Error = 0,
-    uSAI_Idle = 1,
-    uSAI_Busy = 2,
-    uSAI_Done = 3
+    uSAI_Idle = 0x0,            /*!< Nothing in the receiver. */
+    uSAI_Busy,                  /*!< Transfer queue not finished. */
+    uSAI_Error                  /*!< Transfer error. */
 };
 
-/*! @brief SAI Standard.*/
-typedef enum _sai_protocol
-{
-    uSAI_SAI = 0x1U,
-    uSAI_LSB = 0x10U,
-    uSAI_PDM_FILTER = 0x100U,
-    uSAI_PDM_EN = 0x1000U,
-    uSAI_USEDDR = 0x10000U,
-    uSAI_MODE = 0x3000000U
-} sai_protocol_t;
-
-/*! @brief SAI clock config.*/
+/*! @brief SAI channel clock config. */
 typedef enum _sai_clk_mode
 {
-    uSAI_CLK0_INT_WS = 0,
-    uSAI_CLK1_INT_WS,
-    uSAI_EXT_CLK_INT_WS,
-    uSAI_EXT_CLK_EXT_WS
+    uSAI_CLK0_INT_WS = 0,       /*!< Clock | WS : Clock Generator 0. */
+    uSAI_CLK1_INT_WS,           /*!< Clock | WS : Clock Generator 1. */
+    uSAI_EXT_CLK_INT_WS,        /*!< Clock : External clock | WS : Clock Generator 0. */
+    uSAI_EXT_CLK_EXT_WS         /*!< Clock | WS : External clock. */
 } sai_clk_mode_t;
 
-/*! @brief SAI Chip Select (csn) configuration (which csn to configure).*/
+/*! @brief SAI Chip Select(csn) configuration. */
 typedef enum _sai_chan
 {
-    uSAI_Channel0 = 0U,
-    uSAI_Channel1 = 1U
+    uSAI_Channel0 = 0U, /*!< Module I2S0. */
+    uSAI_Channel1 = 1U  /*!< Module I2S1. */
 } sai_chan_t;
 
-/*! @brief Audio sample rate.*/
+/*! @brief Audio sample rate. */
 typedef enum _sai_sample_rate
 {
-    uSAI_Freq_8 = 8000,
-    uSAI_Freq_11 = 11025,
-    uSAI_Freq_16 = 16000,
-    uSAI_Freq_22 = 22050,
-    uSAI_Freq_32 = 32000,
-    uSAI_Freq_44 = 44100,
-    uSAI_Freq_48 = 48000,
-    uSAI_Freq_96 = 96000,
+    uSAI_Freq_8   = 8000,
+    uSAI_Freq_11  = 11025,
+    uSAI_Freq_16  = 16000,
+    uSAI_Freq_22  = 22050,
+    uSAI_Freq_32  = 32000,
+    uSAI_Freq_44  = 44100,
+    uSAI_Freq_48  = 48000,
+    uSAI_Freq_96  = 96000,
     uSAI_Freq_192 = 192000
 } sai_sample_rate_t;
 
-/*! @brief Audio word width.*/
+/*! @brief SAI clock generator word width. */
 typedef enum _sai_word_width
 {
-    uSAI_Word_8 = 8,
-    uSAI_Word_16 = 16,
-    uSAI_Word_24 = 24,
-    uSAI_Word_32 = 32
+    uSAI_Word_8  = 0, /*!< 8 bits. */
+    uSAI_Word_16 = 1, /*!< 16 bits. */
+    uSAI_Word_32 = 2  /*!< 32 bits. */
 } sai_word_width_t;
 
-/*! @brief Sai channel config.*/
-typedef struct _sai_chan_mode
-{
-    char ext_clk;
-    uint8_t clk_en;
-    sai_sample_rate_t sampleRate_Hz;
-    sai_word_width_t dataWidth;
-    sai_protocol_t protocol;
-} sai_chan_mode_t;
-
-/*! @brief Sai filter config.*/
-typedef struct _sai_filter
-{
-    uint16_t decimation;
-    uint16_t shift;
-} sai_filter_t;
-
-/*! @brief SAI config structure.*/
-typedef struct _sai_config
-{
-    sai_chan_mode_t chan_mode;
-    sai_filter_t filter;
-} sai_config_t;
-
-/*! @brief SAI transfer structure.*/
+/*! @brief SAI transfer structure. */
 typedef struct _sai_transfer
 {
-    uint8_t *data;
-    size_t dataSize;
-    uint8_t configFlags;
-    sai_chan_t channel;
+    uint8_t         *rxData;      /*!< Receive buffer. */
+    volatile size_t  rxDataSize;  /*!< RX Transfer bytes. */
+    uint8_t          configFlags; /*!< Transfer configuration flags. */
+    sai_chan_t       channel;     /*!< SAI channel used for the transfer. */
 } sai_transfer_t;
 
-/*! @brief SAI transfer request type definition.*/
-#define  sai_req_t udma_req_t
+/*!
+ * @brief Completion callback function pointer type.
+ *
+ * When an asynchronous transfer is completed, the handler calls this callback function.
+ *
+ * @param userData  Parameter passed to the callback function by the user.
+ */
+typedef void (*sai_transfer_callback_t)(void *userData);
 
-typedef struct _sai_handle_t sai_handle_t;
-
-/*! @brief SAI master transfer callback typedef. */
-typedef void (*sai_transfer_callback_t)(I2S_Type *base,
-                                        sai_handle_t *handle,
-                                        status_t status,
-                                        void *userData);
-
-struct _sai_handle_t
+/*!
+ * @brief SAI handler structure.
+ *
+ * This structure holds information to handle events from UDMA upon asynchronous transfers completion.
+ * When asynchronous transfers are used, this structure should be filled.
+ */
+typedef struct _sai_handle_t
 {
-    uint8_t state;
-    sai_transfer_callback_t callback;
-    void *userData;
-};
+    sai_transfer_callback_t  callback; /*!< A callback function called when the transfer is finished. */
+    void                    *userData; /*!< A callback parameter passed to the callback function. */
+    sai_transfer_t           transfer; /*!< SAI transfer. */
+    uint8_t                  state;    /*!< A transfer state maintained during transfer. */
+} sai_handle_t;
 
 
 /*******************************************************************************
- * API
+ * APIs
  ******************************************************************************/
 
 #if defined(__cplusplus)
@@ -178,92 +140,151 @@ extern "C" {
 #endif /*__cplusplus*/
 
 /*!
- * @brief  SAI audio device initialization
+ * @name SAI module configuration.
+ * @{
+ */
+
+/*!
+ * @brief Get instance number of a SAI module.
  *
- * @param base SAI base pointer.
- * @param sdi  I2S serial date pin num.
- * @param ws   I2S word select pin num.
- * @param sck  I2S serial clock pin num.
+ * @param base           SAI base pointer.
+ *
+ * @return Instance number of the SAI module.
+ */
+uint32_t SAI_GetInstance(I2S_Type *base);
+
+/*!
+ * @brief Initialize a SAI module.
+ *
+ * This function initializes a SAI module.
+ *
+ * @param base           SAI base pointer.
+ * @param sdi            I2S serial data pin number.
+ * @param ws             I2S word select pin number.
+ * @param sck            I2S serial clock pin number.
  */
 void SAI_Init(I2S_Type *base, PinName sdi, PinName ws, PinName sck);
 
 /*!
- * @brief  SAI audio device initialization
+ * @brief Release a SAI module.
  *
- * @param base SAI base pointer.
+ * @param base           SAI base pointer.
  */
 void SAI_Deinit(I2S_Type *base);
 
 /*!
- * @brief  SAI audio device filter initilization
+ * @brief Configure SAI module for the external clock.
  *
- * @param base       SAI base pointer.
- * @param ch_id      Channel ID.
- * @param decimation Filter decimation.
- * @param shift      Filter shift.
+ * This function configures the I2S module in case the external clock is used
+ * instead of the internal clocks.
+ * When the external clock and internal WS are used, the wordLength parameter indicates
+ * after how many bits the WS is toggled. The value is (num bits – 1).
+ *
+ * @param base           SAI base pointer.
+ * @param wordLength     External clock word length.
  */
-void SAI_FilterConfig(I2S_Type *base,
-                      char ch_id,
-                      uint16_t decimation,
-                      uint16_t shift);
+void SAI_ExternalBitsWordConfig(I2S_Type *base, uint8_t wordLength);
 
 /*!
- * @brief  SAI audio device external bits word configuration
+ * @brief Configure SAI module's internal clock.
  *
- * @param base              SAI base pointer.
- * @param bits              When using EXT Clock and internal WS, selects after how many bits the WS is toggled.
- *                          The value written here is (num bits – 1).
+ * This function configures the internal clock of the I2S module.
+ * This clock is used to generate the Word Select(WS) signal.
+ * It can also be used as the clock by a channel instead of an external clock.
+ *
+ * @param base           SAI base pointer.
+ * @param ch_id          ID of the channel to configure.
+ * @param wordLength     Internal clock word length.
+ * @param div            Clock divider.
+ * @param en             Clock enable.
  */
-void SAI_ExternalBitsWordConfig(I2S_Type *base, uint8_t bits);
+void SAI_ClockConfig(I2S_Type *base, char ch_id, uint8_t wordLength, uint8_t en, uint16_t div);
 
 /*!
- * @brief  SAI audio device clock (CLK) configuration
+ * @brief Configure SAI module's channel mode.
  *
- * @param base              SAI base pointer.
- * @param ch_id             Channel ID.
- * @param div               Frequency divider.
- * @param bits              Number of bits to sample.
- * @param en                Enable clock
+ * This function configures the channel mode of the I2S module.
+ *
+ * @param base           SAI base pointer.
+ * @param ch_id          ID of the channel to configure.
+ * @param lsb_first      Word serialization : LSB or MSB.
+ * @param pdm_filt_en    Enable PDM Filter.
+ * @param pdm_en         Enable PDM.
+ * @param use_ddr        Double data rate.
+ * @param clk_mode       Channel clock modes(sai_clk_mode_t).
  */
-void SAI_ClockConfig(I2S_Type *base,
-                     char ch_id,
-                     uint8_t bits,
-                     uint8_t en,
-                     uint16_t div);
+void SAI_ModeConfig(I2S_Type *base, uint8_t ch_id, uint8_t lsb_first, uint8_t pdm_filt_en,
+                    uint8_t pdm_en, uint8_t use_ddr, sai_clk_mode_t clk_mode);
 
 /*!
- * @brief  SAI audio device mode initilization
+ * @brief Configure SAI module filter.
  *
- * @param base              SAI base pointer.
- * @param ch_id             Channel ID.
- * @param lsb_first         LSB or MSB
- * @param pdm_filt_en       Enable PDM Filter
- * @param pdm_en            Enable PDM
- * @param use_ddr           Double Rate
- * @param clk_mode          Channel clock modes
+ * This function confiures the SAI module filter.
+ * The channel ID is required to set one the two available channels of the I2S module.
+ * The decimation and shift parameters are used to set the PDM filter.
+ *
+ * @param base           SAI base pointer.
+ * @param ch_id          ID of the channel to configure.
+ * @param decimation     PDM filter decimation value.
+ * @param shift          PDM filter shift value.
  */
-void SAI_ModeConfig(I2S_Type *base,
-                    char ch_id,
-                    uint8_t lsb_first,
-                    uint8_t pdm_filt_en,
-                    uint8_t pdm_en,
-                    uint8_t use_ddr,
-                    uint8_t clk_mode);
+void SAI_FilterConfig(I2S_Type *base, char ch_id, uint16_t decimation, uint16_t shift);
 
+/*! @} */
 
 /*!
- * @brief Performs an blocking receive transfer on SAI.
+ * @name Synchronous operations(blocking functions).
+ * @{
+ */
+
+/*!
+ * @brief Blocking transfer from a SAI module.
  *
- * @note This API returns immediately after the transfer initiates.
- * Use event to check whether the transfer is finished.
- * If the return status is not ustatus_SAI_Busy, the transfer
- * is finished.
+ * This function reads data from a SAI module into a buffer. This function uses blocking API.
  *
- * @param base SAI base pointer
- * @param xfer Pointer to the sai_transfer_t structure.
- * @retval ustatus_Success Successfully started the data receive.
+ * @param base           SAI base pointer.
+ * @param xfer           Pointer to sai_transfer_t structure.
+ *
+ * @retval uStatus_Success if the operation is successful, an error otherwise.
  */
 status_t SAI_TransferReceiveBlocking(I2S_Type *base, sai_transfer_t *xfer);
+
+/*! @} */
+
+/*!
+ * @name Asynchronous operations(non blocking functions).
+ * @{
+ */
+
+/*!
+ * @brief Non blocking transfer from a SAI module.
+ *
+ * This function is used for non blocking transactions using UDMA.
+ * Once the UDMA, called for the transfer operations, is configured, this function returns.
+ *
+ * @note Calling the API returns immediately after transfer initiates. When all
+ * data is transferred, the callback function is called.
+ *
+ * @note This API returns immediately after the transfer initiates.
+ *       Call the SAI_RxGetTransferStatusIRQ to poll the transfer status
+ *       and check whether the transfer is finished.
+ *       If the return status is not ustatus_SAI_Busy, the transfer is finished.
+ *
+ * @param                base SAI base pointer
+ * @param xfer           Pointer to the sai_transfer_t structure.
+ * @param handle         Pointer to the sai_handle_t structure.
+ *
+ * @retval ustatus_Success    Successfully started the data reception.
+ * @retval uStatus_SAI_Error  Transfer error.
+ */
+status_t SAI_TransferReceiveNonBlocking(I2S_Type *base, sai_transfer_t *xfer, sai_handle_t *handle);
+
+/*! @} */
+
+/*!
+ * @name IRQ Handler.
+ * @{
+ */
 
 /*!
  * @brief Initializes the SAI Rx handle.
@@ -271,55 +292,24 @@ status_t SAI_TransferReceiveBlocking(I2S_Type *base, sai_transfer_t *xfer);
  * This function initializes the Rx handle for the SAI Rx transactional APIs. Call
  * this function once to get the handle initialized.
  *
- * @param base SAI base pointer.
- * @param handle SAI handle pointer.
- * @param callback Pointer to the user callback function.
- * @param userData User parameter passed to the callback function.
+ * @param base           SAI base pointer.
+ * @param handle         Pointer to sai_handle_t structure.
+ * @param callback       Callback function.
+ * @param userData       Parameter passed to the callback function.
  */
-void SAI_TransferRxCreateHandle(I2S_Type *base,
-                                sai_handle_t *handle,
-                                sai_transfer_callback_t callback,
-                                void *userData);
+void SAI_CreateHandler(I2S_Type *base, sai_handle_t *handle,
+                       sai_transfer_callback_t callback, void *userData);
 
 /*!
- * @brief Performs an interrupt non-blocking receive transfer on SAI.
+ * @brief SAI IRQ handler.
  *
- * @note This API returns immediately after the transfer initiates.
- * Call the SAI_RxGetTransferStatusIRQ to poll the transfer status and check whether
- * the transfer is finished. If the return status is not ustatus_SAI_Busy, the transfer
- * is finished.
+ * This function is called when a non blocking transfer is completed.
+ * When called, the callback function previously defined is executed.
  *
- * @param base SAI base pointer
- * @param handle Pointer to the sai_handle_t structure which stores the transfer state.
- * @param xfer Pointer to the sai_transfer_t structure.
- * @retval ustatus_Success Successfully started the data receive.
- * @retval ustatus_SAI_RxBusy Previous receive still not finished.
- */
-status_t SAI_TransferReceiveNonBlocking(I2S_Type *base, sai_handle_t *handle, sai_transfer_t *xfer);
-
-/*!
- * @brief Rx interrupt handler.
- *
- * @param base SAI base pointer.
- * @param handle Pointer to the sai_handle_t structure.
- */
-void SAI_TransferRxHandleIRQ(I2S_Type *base, sai_handle_t *handle);
-
-/*!
- * @brief Rx interrupt handler for channel0.
- * @param handle Pointer to user handler
+ * @param arg            Pointer to sai_handle_t structure.
  *
  */
-void SAI_IRQHandler_CH0(void *handle);
-
-/*!
- * @brief Rx interrupt handler for channel1.
- * @param handle Pointer to user handler
- *
- */
-void SAI_IRQHandler_CH1(void *handle);
-
-
+void SAI_IRQHandler(void *arg);
 
 /*! @} */
 

@@ -84,9 +84,9 @@ static PORT_Type *const port_addrs[] = PORT_BASE_PTRS;
  ******************************************************************************/
 static void pin_function(PinName pin, int function)
 {
-    int pin_num = (pin & 0xFF) - 8;
+    int pin_num = (pin & 0xFF) - GAP_PIN_OFFSET;
 
-    if (0 <= pin_num && pin_num < 47 )
+    if (0 <= pin_num && pin_num < GAP_PORT_PIN_NUM )
         PORT_SetPinMux(port_addrs[GET_GPIO_PORT(pin)], pin_num, (port_mux_t)function);
 }
 
@@ -144,6 +144,8 @@ void CPI_Init(CPI_Type *base, PinName pclk, PinName hsync, PinName vsync,
 
 void CPI_Deinit(CPI_Type *base)
 {
+    CPI_Disable(base);
+
     /* UDMA CPI device off */
     UDMA_Deinit((UDMA_Type *)base);
 }
@@ -159,52 +161,9 @@ void CPI_GetDefaultConfig(cpi_config_t *masterConfig)
     masterConfig->shift = 0;
     masterConfig->frameDrop_en = 0;
     masterConfig->frameDrop_value = 0;
-/* masterConfig->wordWidth = */
 }
 
-void CPI_DropFrame(cpi_config_t *masterConfig, uint16_t arg)
-{
-    masterConfig->frameDrop_en = 1;
-    masterConfig->frameDrop_value = arg;
-}
-
-void CPI_Normalization(cpi_config_t *masterConfig, uint16_t arg)
-{
-    masterConfig->shift = arg;
-}
-
-void CPI_Filter(CPI_Type *base, image_filter_t *filter)
-{
-    base->CFG_FILTER = (CPI_CFG_FILTER_R_COEFF(filter->r_coeff)|
-                        CPI_CFG_FILTER_G_COEFF(filter->g_coeff)|
-                        CPI_CFG_FILTER_B_COEFF(filter->b_coeff));
-}
-
-void CPI_ImageExtract(CPI_Type *base, cpi_config_t *masterConfig, image_slice_t *slicer)
-{
-    base->CFG_LL = (CPI_CFG_LL_FRAMESLICE_LLX(slicer->slice_ll.x ) | CPI_CFG_LL_FRAMESLICE_LLY(slicer->slice_ll.y ));
-    base->CFG_UR = (CPI_CFG_UR_FRAMESLICE_URX((slicer->slice_ur.x-1) ) | CPI_CFG_UR_FRAMESLICE_URY((slicer->slice_ll.y-1) ));
-    masterConfig->slice_en = 1;
-}
-
-void CPI_Enable(CPI_Type *base, cpi_config_t *masterConfig)
-{
-    base->CFG_SIZE = CPI_CFG_SIZE(masterConfig->row_len);
-    base->CFG_GLOB = ( CPI_CFG_GLOB_FRAMEDROP_EN(masterConfig->frameDrop_en)          |
-                       CPI_CFG_GLOB_FRAMEDROP_VAL(masterConfig->frameDrop_value) |
-                       CPI_CFG_GLOB_FRAMESLICE_EN(masterConfig->slice_en)             |
-                       CPI_CFG_GLOB_FORMAT(masterConfig->format)                      |
-                       CPI_CFG_GLOB_SHIFT(masterConfig->shift)                        |
-                       CPI_CFG_GLOB_EN(1)
-            );
-}
-
-void CPI_Disable(CPI_Type *base)
-{
-    base->CFG_GLOB &= ~(CPI_CFG_GLOB_EN(0));
-}
-
-static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer, const int hint) {
+static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer) {
     cpi_req_t *RX = UDMA_FindAvailableRequest();
 
     RX->info.dataAddr = (uint32_t) transfer->data;
@@ -214,18 +173,12 @@ static status_t CPI_ReceptionStart(CPI_Type *base, cpi_transfer_t *transfer, con
     RX->info.configFlags = transfer->configFlags;
     RX->info.ctrl = UDMA_CTRL_NORMAL;
 
-    if (hint == UDMA_WAIT)
-        RX->info.task = 0;
-    else
-        RX->info.task = 1;
+    RX->info.task = 1;
     RX->info.repeat.size = 0;
 
-    UDMA_SendRequest((UDMA_Type *)base, RX, hint);
+    UDMA_SendRequest((UDMA_Type *)base, RX);
 
-    if (hint == UDMA_WAIT)
-        return uStatus_CPI_Idle;
-    else
-        return uStatus_CPI_Busy;
+    return uStatus_CPI_Busy;
 }
 
 
@@ -255,7 +208,7 @@ status_t CPI_ReceptionNonBlocking(CPI_Type *base, cpi_handle_t *handle, cpi_tran
 
     s_cpiMasterIsr = CPI_ReceptionHandleIRQ;
 
-    CPI_ReceptionStart(base, transfer, UDMA_NO_WAIT);
+    CPI_ReceptionStart(base, transfer);
 
     return handle->state;
 
@@ -294,3 +247,8 @@ void CPI_ReceptionHandleIRQ(CPI_Type *base, cpi_handle_t *handle)
     }
 }
 
+void CPI_DriverIRQHandler(void)
+{
+    assert(s_cpiHandle[0]);
+    s_cpiMasterIsr(CPI, (cpi_handle_t *)s_cpiHandle[0]);
+}

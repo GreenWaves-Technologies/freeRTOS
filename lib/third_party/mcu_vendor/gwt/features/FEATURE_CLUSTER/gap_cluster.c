@@ -87,11 +87,7 @@ static void CLUSTER_SetCoreStack() {
         cluster_is_init = 1;
 
         /* Cluster calls FC */
-        #if defined(__GAP8__)
         EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
-        #elif defined(__VEGA__)
-        FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_EVENT);
-        #endif
     }
 }
 
@@ -107,13 +103,9 @@ static void CLUSTER_UnSetCoreStack() {
     if(!__core_ID()) {
         /* master core */
         cluster_core_stack_size = 1;
-        /* Cluster calls FC */
 
-        #if defined(__GAP8__)
+        /* Cluster calls FC */
         EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
-        #elif defined(__VEGA__)
-        FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_EVENT);
-        #endif
     }
 }
 
@@ -139,13 +131,9 @@ void CLUSTER_Start(int cid, int nbCores) {
          * waiting from orders through the dispatcher
          */
         for (int i = 0; i < CLUSTER_CORES_NUM; i++) {
-            #if defined(__GAP8__)
             SCB->BOOT_ADDR[i] = 0x1C000100;
-            #elif defined(__VEGA__)
-            SCB->BOOT_ADDR[i] = 0x1C008100;
-            #endif
         }
-        SCB->FETCH_EN = 0xFFFFFFFF;
+        SCB->FETCH_EN = 0xFF;
 
         /* Now do the runtime initializations */
         /* In case the chip does not support L1 preloading, the initial L1 data are in L2, we need to copy them to L1 */
@@ -174,14 +162,11 @@ void CLUSTER_Wait(int cid)
     /* If Cluster has not finished previous task, wait */
     while(*(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.entry))
     {
-        #if defined(__GAP8__)
         EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
-        #elif defined(__VEGA__)
-        ITC_WaitEvent_NOIRQ(1 << CLUSTER_NOTIFY_FC_EVENT);
-        #endif
 
         CLUSTER_FC_Delegate();
     }
+
 }
 
 static inline void CLUSTER_FC2CL_StackDeInit()
@@ -198,11 +183,7 @@ static inline void CLUSTER_FC2CL_StackDeInit()
     /* Wait response from cluster cores */
     while(*(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&cluster_core_stack_size) == 0)
     {
-        #if defined(__GAP8__)
         EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
-        #elif defined(__VEGA__)
-        ITC_WaitEvent_NOIRQ(1 << CLUSTER_NOTIFY_FC_EVENT);
-        #endif
     }
 }
 
@@ -327,11 +308,7 @@ void CLUSTER_TaskFinish(){
     master_task.entry = NULL;
 
     /* Notify FC the current task is finished */
-    #if defined(__GAP8__)
     EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
-    #elif defined(__VEGA__)
-    FC_ITC->STATUS_SET = (1 << CLUSTER_NOTIFY_FC_EVENT);
-    #endif
 }
 
 uint8_t CLUSTER_GetCoreMask() {
@@ -359,11 +336,7 @@ void CLUSTER_SendTask(uint32_t cid, void *entry, void* arg, cluster_task_t *end)
     while(!cluster_is_init ||
           *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.entry))
     {
-        #if defined(__GAP8__)
         EU_EVT_MaskWaitAndClr(1 << CLUSTER_NOTIFY_FC_EVENT);
-        #elif defined(__VEGA__)
-        ITC_WaitEvent_NOIRQ(1 << CLUSTER_NOTIFY_FC_EVENT);
-        #endif
     }
 
     *(volatile int *)GAP_CLUSTER_TINY_DATA(0, (uint32_t)&master_task.entry) = (uint32_t) entry;
@@ -375,7 +348,6 @@ void CLUSTER_SendTask(uint32_t cid, void *entry, void* arg, cluster_task_t *end)
 
 
 void CLUSTER_SynchBarrier() {
-    //EU_BarrierSetup(cluster_core_mask);
     EU_BarrierTriggerWaitClear();
 }
 

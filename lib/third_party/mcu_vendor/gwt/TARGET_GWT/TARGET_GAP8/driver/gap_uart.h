@@ -205,11 +205,8 @@ void UART_Deinit(UART_Type *base);
  * This function initializes the UART configuration structure to a default value. The default
  * values are as follows.
  *   uartConfig->baudRate_Bps = 115200U;
- *   uartConfig->bitCountPerChar = uUART_8BitsPerChar;
  *   uartConfig->parityMode = uUART_ParityDisabled;
  *   uartConfig->stopBitCount = uUART_OneStopBit;
- *   uartConfig->txFifoWatermark = 0;
- *   uartConfig->rxFifoWatermark = 1;
  *   uartConfig->enableTx = false;
  *   uartConfig->enableRx = false;
  *
@@ -263,7 +260,7 @@ uint32_t UART_GetStatusFlags(UART_Type *base);
  * is a logical OR of enumeration members. See @ref _uart_interrupt_enable.
  * For example, to enable TX empty interrupt and RX full interrupt, do the following.
  * @code
- *     UART_EnableInterrupts(UART1,uUART_TxDataRegEmptyInterruptEnable | uUART_RxDataRegFullInterruptEnable);
+ *     UART_EnableInterrupts(UART1,uUART_TxEndInterruptEnable | uUART_RXEndInterruptEnable);
  * @endcode
  *
  * @param base UART peripheral base address.
@@ -278,7 +275,7 @@ void UART_EnableInterrupts(UART_Type *base, uint32_t mask);
  * is a logical OR of enumeration members. See @ref _uart_interrupt_enable.
  * For example, to disable TX empty interrupt and RX full interrupt do the following.
  * @code
- *     UART_DisableInterrupts(UART1,uUART_TxDataRegEmptyInterruptEnable | uUART_RxDataRegFullInterruptEnable);
+ *     UART_DisableInterrupts(UART1,uUART_TxEndInterruptEnable | uUART_RXEndInterruptEnable);
  * @endcode
  *
  * @param base UART peripheral base address.
@@ -297,7 +294,7 @@ void UART_DisableInterrupts(UART_Type *base, uint32_t mask);
  * @code
  *     uint32_t enabledInterrupts = UART_GetEnabledInterrupts(UART1);
  *
- *     if (uUART_TxDataRegEmptyInterruptEnable & enabledInterrupts)
+ *     if (uUART_TxEndInterruptEnable & enabledInterrupts)
  *     {
  *         ...
  *     }
@@ -497,7 +494,6 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
  * @param handle UART handle pointer.
  * @param rx     The buffer address.
  * @param rx_length   The buffer length.
- * @param receivedBytes Bytes received from the ring buffer directly.
  * @retval uStatus_Success Successfully queue the transfer into transmit queue.
  * @retval uStatus_UART_RxBusy Previous receive request is not finished.
  * @retval uStatus_InvalidArgument Invalid argument.
@@ -505,8 +501,7 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, co
 status_t UART_TransferReceiveNonBlocking(UART_Type *base,
                                          uart_handle_t *handle,
                                          const uint8_t *rx,
-                                         size_t rx_length,
-                                         size_t *receivedBytes);
+                                         size_t rx_length);
 
 /*!
  * @brief Get the TX busy state.
@@ -517,7 +512,8 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base,
  * @param base UART peripheral base address.
  */
 static inline  uint32_t UART_TXBusy(UART_Type *base) {
-    return (base->STATUS & UART_STATUS_TX_BUSY_MASK);
+    /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
+    return UDMA_TXBusy((UDMA_Type *)base);
 }
 
 /*!
@@ -530,8 +526,27 @@ static inline  uint32_t UART_TXBusy(UART_Type *base) {
  */
 static inline uint32_t UART_RXBusy(UART_Type *base) {
     /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
-    UDMA_Type *udma_uart = (UDMA_Type *)base;
-    return ((udma_uart->RX_CFG & UDMA_CFG_EN_MASK) >> UDMA_CFG_EN_SHIFT);
+    return UDMA_RXBusy((UDMA_Type *)base);
+}
+
+/*!
+ * @brief Get the TX UDMA channel Reamin bytes.
+ *
+ * @param base UART peripheral base address.
+ */
+static inline  uint32_t UART_TXRemainBytes(UART_Type *base) {
+    /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
+    return UDMA_TXRemainBytes((UDMA_Type *)base);
+}
+
+/*!
+ * @brief Get the RX UDMA channel Remain bytes.
+ *
+ * @param base UART peripheral base address.
+ */
+static inline uint32_t UART_RXRemainBytes(UART_Type *base) {
+    /* Fix, Need to use UDMA register cfg_rx_en bit to determine busy or not */
+    return UDMA_RXRemainBytes((UDMA_Type *)base);
 }
 
 /*!

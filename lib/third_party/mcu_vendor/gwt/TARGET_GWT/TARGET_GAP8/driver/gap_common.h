@@ -37,7 +37,6 @@
 #include "gap_eu.h"
 #include "gap_fc_event.h"
 #include "gap_pmu.h"
-#include "gap_debug.h"
 #include "gap_uart.h"
 #include "gap_hyperbus.h"
 #include "gap_spi.h"
@@ -52,6 +51,9 @@
 #include "gap_fll.h"
 #include "gap_gpio.h"
 #include "gap_pwm.h"
+#include "gap_dmacpy.h"
 
 #include "gap_fc_malloc.h"
+#include "gap_debug.h"
+#include "gap_bridge.h"
 #endif

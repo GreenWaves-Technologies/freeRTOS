@@ -29,9 +29,14 @@
  */
 
 #include "gap_fc_event.h"
-#include "gap_pmu.h"
 
-uint32_t fc_handler_vector[UDMA_CHANNEL_NUM];
+/*******************************************************************************
+ * Variables, macros, structures,... definition
+ ******************************************************************************/
+
+/*******************************************************************************
+ * Function definition
+ ******************************************************************************/
 
 __attribute__((section(".text")))
 void FC_EventHandler()
@@ -41,24 +46,24 @@ void FC_EventHandler()
 
     /* Trigger an event in case someone is waiting for it
        it will check the termination using the pending variable */
-    EU_FC_EVT_DemuxTrigSet(FC_SW_NOTIF_EVENT, 0);
+    EU_FC_EVT_DemuxTrigSet(FC_SW_NOTIFY_EVENT, 0);
     /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
        generating an event as soon as the FIFO is not empty */
     EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
 
     event &= 0xFF;
 
-    if(event < UDMA_EVENT_RESERVED1) {
-        UDMA_EventHandler(event);
-    } else if(event == RTC_APB_EVENT) {
+    if (event < UDMA_EVENT_RESERVED1) {
+        UDMA_EventHandler(event, 0);
+    } else if (event == RTC_APB_EVENT) {
         RTC_APB_IRQHandler();
-    } else if(event == RTC_EVENT) {
+    } else if (event == RTC_EVENT) {
         RTC_IRQHandler();
-    } else if(event == GPIO_EVENT) {
+    } else if (event == GPIO_EVENT) {
         GPIO_IRQHandler();
-    } else if(PWM0_EVENT <= event && event <= PWM3_EVENT) {
+    } else if (PWM0_EVENT <= event && event <= PWM3_EVENT) {
         PWM_IRQHandler(event);
-    } else if(event <= PMU_DLC_EVENT_BRIDGE_SCU_OK) {
+    } else if (event <= PMU_DLC_EVENT_BRIDGE_SCU_OK) {
         PMU_IRQHandler(event);
     } else {
 

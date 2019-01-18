@@ -515,7 +515,6 @@ typedef union
 /**
   \brief  Structure type to access the Nested Vectored Interrupt Controller (NVIC).
  */
-#if defined(__GAP8__)
 typedef struct
 {
   __IOM  uint32_t MASK;                    /**< EU_DEMUX mask register, offset: 0x00 */
@@ -526,20 +525,6 @@ typedef struct
   __IOM  uint32_t MASK_IRQ_OR;             /**< EU_DEMUX mask irq or register, offset: 0x14 */
   __IOM  uint32_t STATUS;                  /**< EU_DEMUX Status register, offset: 0x18 */
 }  NVIC_Type;
-#elif defined(__VEGA__)
-typedef struct {
-  __IO  uint32_t MASK;           /**< FC_ITC Mask register, offset: 0x00 */
-  __IO  uint32_t MASK_SET;       /**< FC_ITC Mask set register, offset: 0x04 */
-  __IO  uint32_t MASK_CLR;       /**< FC_ITC Mask clean register, offset: 0x08 */
-  __IO  uint32_t STATUS;         /**< FC_ITC Status register, offset: 0x0C */
-  __IO  uint32_t STATUS_SET;     /**< FC_ITC Status set register, offset: 0x10 */
-  __IO  uint32_t STATUS_CLR;     /**< FC_ITC Status clean register, offset: 0x14 */
-  __IO  uint32_t ACK;            /**< FC_ITC ACK register, offset: 0x18 */
-  __IO  uint32_t ACK_SET;        /**< FC_ITC ACK set register, offset: 0x1C */
-  __IO  uint32_t ACK_CLR;        /**< FC_ITC ACK clean register, offset: 0x20 */
-  __IO  uint32_t FIFO;           /**< FC_ITC FIFO register, offset: 024 */
-} NVIC_Type;
-#endif
 /*@} end of group CMSIS_NVIC */
 
 
@@ -558,8 +543,12 @@ typedef struct
   __OM uint32_t EOC;                   /*!< Offset: 0x000 (R/W ) CPUID Base Register */
   __IOM uint32_t _reserved0;           /*!< Offset: 0x004 (R/W)  reserved Register */
   __IOM uint32_t FETCH_EN;             /*!< Offset: 0x008 (R/W)  Interrupt Control and State Register */
-  __IOM uint32_t _reserved1[13];       /*!< Offset: 0x00C (R/W)  reserved Registers */
-  __IOM uint32_t BOOT_ADDR[8];            /*!< Offset: 0x040 (R/W)  Vector Table Offset Register */
+  __IOM uint32_t _reserved1;           /*!< Offset: 0x00C (R/W)  reserved Register */
+  __OM  uint32_t EVENT;                /*!< Offset: 0x010 (W)  Event out Register */
+  __IOM uint32_t _reserved2[3];        /*!< Offset: 0x014 (R/W)  reserved Register */
+  __OM  uint32_t CLUSTER_CG;           /*!< Offset: 0x020 (R/W)  Event out Register */
+  __IOM uint32_t _reserved3[7];        /*!< Offset: 0x024 (R/W)  reserved Registers */
+  __IOM uint32_t BOOT_ADDR[8];         /*!< Offset: 0x040 (R/W)  Vector Table Offset Register */
 } SCB_Type;
 
 /* SCB Registers Definitions */
@@ -584,7 +573,8 @@ typedef struct
   __IOM uint32_t ICACHE_FLUSH;             /*!< Offset: 0x04 (R/W)  Cluster Icache Flush Register */
   __IOM uint32_t ICACHE_LX_SEL_FLUSH;      /*!< Offset: 0x08 (R/W)  Cluster Icache Level-X Flush Register or FC Flush Selected Address Register*/
   __IOM uint32_t ICACHE_SEL_FLUSH_STATUS;  /*!< Offset: 0x0C (R/W)  Cluster Icache Flush Selected Address Register or FC ICACHE status */
-  __IOM uint32_t ICACHE_IS_PRI;            /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
+  __IOM uint32_t ICACHE_CNTS_CLEAR;        /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
+  __IOM uint32_t ICACHE_CNTS_ENABLE;       /*!< Offset: 0x10 (R/W)  Cluster Icache is private Icache */
 } SCBC_Type;
 
 /* SCBC Registers Definitions */
@@ -1075,16 +1065,11 @@ typedef struct
 #define CORE_EU_SW_EVENTS_DEMUX_BASE (CORE_EU_DEMUX_BASE + 0x0100UL)   /*!< RISC Core Event Unit SW Event Demux Base Address */
 #define CORE_EU_BARRIER_DEMUX_BASE   (CORE_EU_DEMUX_BASE + 0x0200UL)   /*!< RISC Core Event Unit HW Barrier Demux Base Address */
 
-#define CORE_MCHAN_BASE              (CORE_EU_DEMUX_BASE + 0x0400UL)   /*!< RISC Core DMAMCHAN Base Address between L2 and Cluster TCDM */
 
-#if defined(__GAP8__)
 #define CORE_SysTick_BASE   (CORE_PERI_BASE +  0x0400UL)               /*!< RISC Core SysTick Base Address */
-#define NVIC_BASE           (CORE_EU_CORE_DEMUX_BASE)                  /*!< RISC NVIC Base Address */
 
-#elif defined(__VEGA__)
-#define CORE_SysTick_BASE   (SOC_PERI_BASE  +  0xB000UL)               /*!< RISC Core SysTick Base Address */
-#define NVIC_BASE           (SOC_PERI_BASE  +  0x9000UL)               /*!< RISC NVIC Base Address */
-#endif
+#define NVIC_BASE           (CORE_EU_CORE_DEMUX_BASE)                  /*!< RISC NVIC Base Address */
+#define CORE_MCHAN_BASE     (CORE_EU_DEMUX_BASE + 0x0400UL)            /*!< RISC Core DMAMCHAN Base Address between L2 and Cluster TCDM */
 
 /* FC core Memory map */
 #define FC_SCBC_BASE        (FC_BASE + CORE_SCBC_BASE)                 /*!< FC System Control Block Cache Base Address */
@@ -1106,15 +1091,15 @@ typedef struct
 
 #define FC_MCHAN_BASE              (FC_BASE + CORE_MCHAN_BASE)                /*!< FC DMAMCHAN Base Address between L2 and Cluster TCDM */
 
-#define SCBC                ((SCBC_Type   *)   CORE_SCBC_BASE )           /*!< Icache SCBC configuration struct */
+#define SCBC                ((SCBC_Type   *)   CORE_SCBC_BASE )               /*!< Icache SCBC configuration struct */
 
 /* Core Structrue definitions */
-#define SysTick             ((SysTick_Type   *)     CORE_SysTick_BASE  )   /*!< SysTick configuration struct */
-#define TIMERL              ((TimerL_Type    *)     CORE_SysTick_BASE  )   /*!< SysTick configuration struct */
-#define TIMERH              ((TimerH_Type    *)     CORE_SysTick_BASE  )   /*!< SysTick configuration struct */
+#define SysTick             ((SysTick_Type   *)     FC_SysTick_BASE  )    /*!< SysTick configuration struct */
+#define TIMERL              ((TimerL_Type    *)     FC_SysTick_BASE  )    /*!< SysTick configuration struct */
+#define TIMERH              ((TimerH_Type    *)     FC_SysTick_BASE  )    /*!< SysTick configuration struct */
 
 #if defined (__MPU_PRESENT) && (__MPU_PRESENT == 1U)
-  #define FC_MPU_BASE       (FC_BASE + CORE_PERI_BASE + 0x4400UL)    /*!< Memory Protection Unit */
+  #define FC_MPU_BASE       (FC_BASE + CORE_PERI_BASE + 0x4400UL)        /*!< Memory Protection Unit */
   #define MPU               ((MPU_Type       *)     FC_MPU_BASE      )   /*!< Memory Protection Unit */
 #endif
 
@@ -1136,11 +1121,7 @@ typedef struct
 #define FC_EU_SW_EVENTS      ((EU_SW_EVENTS_DEMUX_Type   *)  FC_EU_SW_EVENTS_BASE)            /*!< EU_SW_EVENTS_DEMUX configuration struct */
 
 /** FC_CLUSTER_ID Definitions */
-#if defined(__GAP8__)
 #define FC_CLUSTER_ID                 32                /**< FC CLuster ID */
-#elif defined(__VEGA__)
-#define FC_CLUSTER_ID                 31                /**< FC CLuster ID */
-#endif
 /*@} */
 
 
@@ -1205,11 +1186,7 @@ typedef struct
 __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
-  #if defined(__GAP8__)
   NVIC->MASK_IRQ_OR = (1UL << IRQn);
-  #elif defined(__VEGA__)
-  NVIC->MASK_SET = (1UL << IRQn);
-  #endif
 }
 
 /**
@@ -1223,11 +1200,7 @@ __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 __STATIC_INLINE uint32_t __NVIC_GetEnableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
-  #if defined(__GAP8__)
   return ((uint32_t)((NVIC->MASK_IRQ & (1UL << IRQn)) ? 1UL : 0UL));
-  #elif defined(__VEGA__)
-  return ((uint32_t)((NVIC->MASK & (1UL << IRQn)) ? 1UL : 0UL));
-  #endif
 }
 
 
@@ -1240,11 +1213,7 @@ __STATIC_INLINE uint32_t __NVIC_GetEnableIRQ(IRQn_Type IRQn)
 __STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn)
 {
   /* U mode does not has the right */
-  #if defined(__GAP8__)
   NVIC->MASK_IRQ_AND = (1UL << IRQn);
-  #elif defined(__VEGA__)
-  NVIC->MASK_CLR = (1UL << IRQn);
-  #endif
 }
 
 
@@ -1336,11 +1305,7 @@ __STATIC_INLINE void __NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
   if((__get_CPRIV() & CPRIV_PRIV_Msk) != 0U) {
     vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305));
   } else {
-#if defined(__GAP8__)
     vectors = (uint32_t *)(0x1C000000);
-#elif defined(__VEGA__)
-    vectors = (uint32_t *)(__builtin_pulp_spr_read(0x005));
-#endif
   }
   vectors[IRQn] = __NVIC_ForgeItVect((uint32_t)vectors, IRQn, vector);
 }
@@ -1359,11 +1324,7 @@ __STATIC_INLINE uint32_t __NVIC_GetVector(IRQn_Type IRQn)
   if((__get_CPRIV() & CPRIV_PRIV_Msk) != 0U) {
     vectors = (uint32_t *)(__builtin_pulp_spr_read(0x305));
   } else {
-#if defined(__GAP8__)
     vectors = (uint32_t *)(0x1C000000);
-#elif defined(__VEGA__)
-    vectors = (uint32_t *)(__builtin_pulp_spr_read(0x005));
-#endif
   }
   return vectors[IRQn];
 }

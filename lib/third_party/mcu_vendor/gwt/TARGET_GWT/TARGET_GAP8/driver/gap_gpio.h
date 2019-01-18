@@ -37,31 +37,27 @@
  * @addtogroup gpio
  * @{
  */
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-/*! @name Driver version */
-/*@{*/
-/*! @brief GPIO driver version 1.0.0. */
-#define GAP_GPIO_DRIVER_VERSION (MAKE_VERSION(1, 0, 0))
-/*@}*/
 
-/*! @brief GPIO state definition */
+/*! @brief GPIO state definition. */
 typedef enum _gpio_pin_state
 {
-    uGPIO_LOW  = 0U,   /*!< Set current pin as 0 */
-    uGPIO_HIGH = 1U,  /*!< Set current pin as 1 */
+    uGPIO_LOW  = 0U,   /*!< Set current pin as 0. */
+    uGPIO_HIGH = 1U,  /*!< Set current pin as 1. */
 } gpio_pin_state_t;
 
-/*! @brief GPIO direction definition */
+/*! @brief GPIO direction definition. */
 typedef enum _gpio_pin_direction
 {
-    uGPIO_DigitalInput = 0U,  /*!< Set current pin as digital input*/
-    uGPIO_DigitalOutput = 1U, /*!< Set current pin as digital output*/
+    uGPIO_DigitalInput = 0U,  /*!< Set current pin as digital input. */
+    uGPIO_DigitalOutput = 1U, /*!< Set current pin as digital output. */
 } gpio_pin_direction_t;
 
 
-/*! @brief Configures the interrupt generation condition. */
+/*! @brief Interrupt generation condition. */
 typedef enum _gpio_interrupt
 {
     uGPIO_InterruptFallingEdge = 0x0U,  /*!< Interrupt on falling edge. */
@@ -71,43 +67,36 @@ typedef enum _gpio_interrupt
 } gpio_interrupt_t;
 
 /*!
- * @brief The GPIO pin configuration structure.
+ * @brief GPIO pin configuration structure.
  *
  * Each pin can only be configured as either an output pin or an input pin at a time.
  *
  * Note that in some use cases, the corresponding port property should be configured in advance
- *        with the PORT_SetPinConfig().
+ * with the PORT_SetPinConfig().
  */
 typedef struct _gpio_pin_config
 {
-    gpio_pin_direction_t pinDirection; /*!< GPIO direction, input or output */
-    /* Output configurations; ignore if configured as an input pin */
-    uint8_t outputLogic; /*!< Set a default output logic, which has no use in input */
+    gpio_pin_direction_t pinDirection; /*!< GPIO direction, input or output. */
+    uint8_t              outputLogic; /*!< Set a default output logic, which has no use if pin direction is input. */
 } gpio_pin_config_t;
 
-/*! @} */
-
 /*******************************************************************************
- * APIs
+ * API
  ******************************************************************************/
 
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
 
-/*!
- * @addtogroup gpio_driver
- * @{
- */
-
 /*! @name GPIO Configuration */
 /*@{*/
 
 /*!
- * @brief Initializes a GPIO pin used by the board.
+ * @brief Initialize a GPIO pin used by the board.
  *
- * To initialize the GPIO, define a pin configuration, as either input or output, in the user file.
- * Then, call the GPIO_PinInit() function.
+ * This function is called to initialize a GPIO pin.
+ * To initialize a GPIO, define a pin configuration gpio_pin_config_t, as either input or output.
+ * Then, call this function.
  *
  * This is an example to define an input pin or an output pin configuration.
  * @code
@@ -117,7 +106,8 @@ extern "C" {
  *   uGPIO_DigitalInput,
  *   0,
  * }
- * //Define a digital output pin configuration,
+ *
+ * // Define a digital output pin configuration,
  * gpio_pin_config_t config =
  * {
  *   uGPIO_DigitalOutput,
@@ -125,11 +115,32 @@ extern "C" {
  * }
  * @endcode
  *
- * @param base   GPIO peripheral base pointer .
- * @param pin    GPIO port pin number
- * @param config GPIO pin configuration pointer
+ * @param base   GPIO peripheral base pointer.
+ * @param pin    GPIO port pin number.
+ * @param config GPIO pin configuration pointer.
  */
 void GPIO_PinInit(GPIO_Type *base, uint32_t pin, const gpio_pin_config_t *config);
+
+/*!
+ * @brief Set the direction of a GPIO pin.
+ *
+ * @param base GPIO peripheral base pointer.
+ * @param pin  GPIO pin number.
+ * @param direction GPIO pin direction.
+ */
+static inline void GPIO_SetPinDirection(GPIO_Type *base, uint32_t pin, gpio_pin_direction_t direction)
+{
+    base->EN  |= (1U << pin);
+
+    switch (direction) {
+        case uGPIO_DigitalInput:
+            base->DIR &= ~(1U << pin);
+            break;
+        case uGPIO_DigitalOutput:
+            base->DIR |= (1U << pin);
+            break;
+    }
+}
 
 /*@}*/
 
@@ -137,11 +148,13 @@ void GPIO_PinInit(GPIO_Type *base, uint32_t pin, const gpio_pin_config_t *config
 /*@{*/
 
 /*!
- * @brief Sets the output level of the multiple GPIO pins to the logic 1 or 0.
+ * @brief Set the output logic of a GPIO pin.
+
+ * This function sets the output of a given pin to either logical 0 or 1.
  *
  * @param base    GPIO peripheral base pointer.
- * @param pin     GPIO pin number
- * @param output  GPIO pin output logic level.
+ * @param pin     GPIO pin number.
+ * @param output  GPIO pin output logic.
  *        - 0: corresponding pin output low-logic level.
  *        - 1: corresponding pin output high-logic level.
  */
@@ -158,31 +171,12 @@ static inline void GPIO_WritePinOutput(GPIO_Type *base, uint32_t pin, uint8_t ou
 }
 
 /*!
- * @brief Sets the output level of the multiple GPIO pins to the logic 1.
+ * @brief Set the output logic of multiple GPIO pins.
+ *
+ * This function sets the output logic of multiple GPIO pins depending on the value of the mask.
  *
  * @param base GPIO peripheral base pointer.
- * @param pin  GPIO pin number
- * @param direction GPIO pin direction
- */
-static inline void GPIO_SetPinDirection(GPIO_Type *base, uint32_t pin, gpio_pin_direction_t direction)
-{
-    base->EN  |= (1U << pin);
-
-    switch (direction) {
-        case uGPIO_DigitalInput:
-            base->DIR &= ~(1U << pin);
-            break;
-        case uGPIO_DigitalOutput:
-            base->DIR |= (1U << pin);
-            break;
-    }
-}
-
-/*!
- * @brief Sets the output level of the multiple GPIO pins to the logic 1.
- *
- * @param base GPIO peripheral base pointer.
- * @param mask GPIO pin number macro
+ * @param mask Mask value of GPIO pins to set.
  */
 static inline void GPIO_SetPinsOutput(GPIO_Type *base, uint32_t mask)
 {
@@ -190,10 +184,12 @@ static inline void GPIO_SetPinsOutput(GPIO_Type *base, uint32_t mask)
 }
 
 /*!
- * @brief Sets the output level of the multiple GPIO pins to the logic 0.
+ * @brief Clear the output logic of multiple GPIO pins.
+ *
+ * This function clears the output logic of multiple GPIO pins depending on the value of the mask.
  *
  * @param base GPIO peripheral base pointer.
- * @param mask GPIO pin number macro
+ * @param mask Mask value of GPIO pins to clear.
  */
 static inline void GPIO_ClearPinsOutput(GPIO_Type *base, uint32_t mask)
 {
@@ -201,26 +197,32 @@ static inline void GPIO_ClearPinsOutput(GPIO_Type *base, uint32_t mask)
 }
 
 /*!
- * @brief Reverses the current output logic of the multiple GPIO pins.
+ * @brief Toggle the current output logic of multiple GPIO pins.
+ *
+ * This functions toggles logical outputs of GPIO pins depending on the value of the mask.
  *
  * @param base GPIO peripheral base pointer.
- * @param mask GPIO pin number macro
+ * @param mask Mask value of GPIO pins to toggle.
  */
 static inline void GPIO_TogglePinsOutput(GPIO_Type *base, uint32_t mask)
 {
     base->OUT ^= mask;
 }
+
 /*@}*/
 
 /*! @name GPIO Input Operations */
 /*@{*/
 
 /*!
- * @brief Reads the current input value of the GPIO port.
+ * @brief Read the current input value of a GPIO pin.
+ *
+ * This function returns the current logical input value of a GPIO pin.
  *
  * @param base GPIO peripheral base pointer.
- * @param pin     GPIO pin number
- * @retval GPIO port input value
+ * @param pin  GPIO pin number.
+ *
+ * @return Current logical input value of the GPIO pin.
  *        - 0: corresponding pin input low-logic level.
  *        - 1: corresponding pin input high-logic level.
  */
@@ -228,13 +230,14 @@ static inline uint32_t GPIO_ReadPinInput(GPIO_Type *base, uint32_t pin)
 {
     return (((base->IN) >> pin) & 0x01U);
 }
+
 /*@}*/
 
 /*! @name GPIO Interrupt */
 /*@{*/
 
 /*!
- * @brief Configures the gpio pin interrupt/DMA request.
+ * @brief GPIO pin interrupt/DMA request configuration.
  *
  * @param base    GPIO peripheral base pointer.
  * @param pin     GPIO pin number.
@@ -242,6 +245,7 @@ static inline uint32_t GPIO_ReadPinInput(GPIO_Type *base, uint32_t pin)
  *        - #uGPIO_InterruptRisingEdge : Interrupt on rising edge.
  *        - #uGPIO_InterruptFallingEdge: Interrupt on falling edge.
  *        - #uGPIO_InterruptEitherEdge : Interrupt on rising or falling edge.
+ *        - #uGPIO_InterruptDisabled   : Interrupt disabled.
  */
 static inline void GPIO_SetPinInterruptConfig(GPIO_Type *base, uint32_t pin, gpio_interrupt_t config)
 {
@@ -263,11 +267,12 @@ static inline void GPIO_SetPinInterruptConfig(GPIO_Type *base, uint32_t pin, gpi
 }
 
 /*!
- * @brief Reads the GPIO port interrupt status flag.
+ * @brief Get GPIO pin interrupt status flag.
  *
  * @param base GPIO peripheral base pointer.
- * @retval The current GPIO port interrupt status flag, for example, 0x00010001 means the
- *         pin 0 and 17 have the interrupt.
+ *
+ * @return The current GPIO port interrupt status flag.
+ * For example, 0x00010001 means the pin 0 and 17 have the interrupt.
  */
 static inline uint32_t GPIO_GetPinsInterruptFlags(GPIO_Type *base)
 {
@@ -275,19 +280,19 @@ static inline uint32_t GPIO_GetPinsInterruptFlags(GPIO_Type *base)
 }
 
 /*!
- * @brief Clears multiple GPIO pin interrupt status flags.
+ * @brief Clear multiple GPIO pin interrupt status flags.
  *
  * @param base GPIO peripheral base pointer.
- * @param mask GPIO pin number macro
+ * @param mask Mask value of GPIO pin to clear interrupt status flags.
  */
 static inline void GPIO_ClearPinsInterruptFlags(GPIO_Type *base, uint32_t mask)
 {
-    /* InterruptFlags will be all cleared once read*/
+    /* InterruptFlags will be all cleared once read. */
     GPIO_GetPinsInterruptFlags(base);
 }
 
 /*!
- * @brief Binding GPIO interrupt handler
+ * @brief Bind an interrupt handler to GPIO.
  *
  * @param base GPIO peripheral base pointer.
  * @param irq  GPIO Interrupt handler pointer.

@@ -82,6 +82,9 @@ int32_t HYPERBUS_IO_Init( uint8_t device )
     if( device == uHYPERBUS_Flash )
     {
         latency = 0;
+        /* Config memory maximum transfer data length for TX and RX*/
+        HYPERBUS_SetMaxLength( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, 1, 0x1ff, 0, uHYPERBUS_Flash );
+        HYPERBUS_SetMaxLength( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, 1, 0x1ff, 1, uHYPERBUS_Flash );
         /* Config memory access timing for TX and RX*/
         HYPERBUS_SetTiming( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, 4, 4, 4, latency, 0, uHYPERBUS_Flash );
         HYPERBUS_SetTiming( ( HYPERBUS_Type * ) HYPERBUS_BASE_PTRS, 4, 4, 4, latency, 1, uHYPERBUS_Flash );

@@ -35,11 +35,11 @@
 #define GAP_BOOT_DATA     __attribute__((section(".boot.data")))
 /*! @brief Code declared with this attribute will be dropped after startup. */
 #define GAP_BOOT_CODE     __attribute__((section(".boot")))
+/*! @brief Data will be put inside fabric L2 memory. */
+#define GAP_L2_DATA       __attribute__((section(".data")))
 
 /*! @brief Data will be put by the linker in FC TCDM or in cluster L1 if there is no FC. */
 #define GAP_FC_DATA       __attribute__((section(".fcTcdm")))
-/*! @brief Data will be put inside fabric L2 memory. */
-#define GAP_L2_DATA       __attribute__((section(".data")))
 /*! @brief Data will be put by the linker at the beginning of the FC TCDM or in cluster L1 if there is no FC. */
 #define GAP_FC_TINY_DATA  __attribute__((section(".fcTcdmTiny")))
 /*! @brief Data will be put in FC TCDM through global address. */

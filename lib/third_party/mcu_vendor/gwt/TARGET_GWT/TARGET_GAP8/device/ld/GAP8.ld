@@ -54,6 +54,8 @@ __L1_STACK_SIZE      = 0x400;
 
 __FC_STACK_SIZE      = 0x1000;
 
+__IRQ_STACK_SIZE     = 0x400;
+
 /* We have to align each sector to word boundaries as our current s19->slm
  * conversion scripts are not able to handle non-word aligned sections. */
 
@@ -248,12 +250,15 @@ SECTIONS
         __fc_bss_start__ = .;
         *(.fcbss)
         *(.fcbss.*)
-        __fc_stack_end__ = .;
-        __fc_stack_start__ = . + __FC_STACK_SIZE;
-        __fc_bss_end__ = . + __FC_STACK_SIZE;
+        __irq_stack_end__ = .;
+        __irq_stack_start__ = . + __IRQ_STACK_SIZE;
+        __fc_stack_end__ = . + __IRQ_STACK_SIZE;
+        __fc_stack_start__ = . + __IRQ_STACK_SIZE + __FC_STACK_SIZE;
+        __fc_bss_end__ = . + __IRQ_STACK_SIZE + __FC_STACK_SIZE;
      } > FC_tcdm_aliased
 
      __fc_bss_size__ = __fc_bss_end__ - __fc_bss_start__;
+     __irq_stack_size__ = __IRQ_STACK_SIZE;
 
     .heapfcram (ORIGIN(FC_tcdm_aliased) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + __fc_bss_size__ ) : AT(ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny) + __fc_bss_size__)
     {

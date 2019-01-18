@@ -38,6 +38,7 @@
 /****************************************************************************/
 
 /* Variables used. */
+#ifdef NOSTDMALLOC
 /*
  * Using heap_5 for memory management : need to define memory regions to
  * allocate memory.
@@ -50,9 +51,9 @@ HeapRegion_t xHeapRegions[] =
     { ( uint8_t * ) &__heapl2ram_start, ( uint32_t ) &__heapl2ram_size },
     { NULL, 0 }
 };
+#endif
 
 /****************************************************************************/
-
 
 #if configUSE_IDLE_HOOK == 1
 void vApplicationIdleHook( void )

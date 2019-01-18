@@ -27,73 +27,89 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _GAP_PORT_H_
 #define _GAP_PORT_H_
 
 #include <assert.h>
 
 /*!
- * @addtogroup port
+ * @addtogroup Port
  * @{
  */
 
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
 
-/*! @name Driver version */
-/*@{*/
-/*! Version 1.0.0. */
-#define GAP_PORT_DRIVER_VERSION (MAKE_VERSION(1, 0, 0))
-/*@}*/
-
-/*! @brief Internal resistor pull feature selection */
+/*! @brief Internal resistor pull feature selection. */
 enum _port_pull
 {
-    uPORT_PullUpDisable = 0U, /*!< Internal pull-up resistor is disabled. */
-    uPORT_PullUpEnable = 1U   /*!< Internal pull-up resistor is enabled. */
+    uPORT_PullUpDisable = 0U, /*!< Internal pull-up resistor disable. */
+    uPORT_PullUpEnable = 1U   /*!< Internal pull-up resistor enable. */
 };
 
-/*! @brief Configures the drive strength. */
+/*! @brief Drive strength configuration. */
 enum _port_drive_strength
 {
-    uPORT_LowDriveStrength = 0U,  /*!< Low-drive strength is configured. */
-    uPORT_HighDriveStrength = 1U, /*!< High-drive strength is configured. */
+    uPORT_LowDriveStrength = 0U,  /*!< Low-drive strength configured. */
+    uPORT_HighDriveStrength = 1U, /*!< High-drive strength configured. */
 };
 
-/*! @brief Pin mux selection */
+/*! @brief Pin mux selection. */
 typedef enum _port_mux
 {
-    uPORT_MuxAlt0 = 0U,           /*!< Default */
-    uPORT_MuxAlt1 = 1U,           /*!< Corresponding pin is configured as GPIO. */
-    uPORT_MuxGPIO = uPORT_MuxAlt1,/*!< Corresponding pin is configured as GPIO. */
-    uPORT_MuxAlt2 = 2U,           /*!< Chip-specific */
-    uPORT_MuxAlt3 = 3U,           /*!< Chip-specific */
+    uPORT_MuxAlt0 = 0U,            /*!< Default. */
+    uPORT_MuxAlt1 = 1U,            /*!< Pin configured as GPIO. */
+    uPORT_MuxGPIO = uPORT_MuxAlt1, /*!< Pin configured as GPIO. */
+    uPORT_MuxAlt2 = 2U,            /*!< Chip-specific. */
+    uPORT_MuxAlt3 = 3U,            /*!< Chip-specific. */
 } port_mux_t;
 
-/*! @brief PORT pin configuration structure */
+/*! @brief Port pin configuration structure. */
 typedef struct _port_pin_config
 {
-    uint16_t pullSelect;    /*!< No-pull/pull-down/pull-up select */
-    uint16_t driveStrength; /*!< Fast/slow drive strength configure */
-    port_mux_t mux;         /*!< Pin mux Configure */
+    uint16_t pullSelect;    /*!< No-pull/pull-down/pull-up select. */
+    uint16_t driveStrength; /*!< Fast/slow drive strength configuration. */
+    port_mux_t mux;         /*!< Pin mux selection. */
 } port_pin_config_t;
 
 /*******************************************************************************
-* API
+ * API
 ******************************************************************************/
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-/*! @name Configuration */
-/*@{*/
-
-static inline void PORT_SetPinMux(PORT_Type *base, uint32_t pin, port_mux_t mux);
+/*!
+ * @brief Pin mux configuration.
+ *
+ * @param base   Port base pointer.
+ * @param pin    Port pin number.
+ * @param mux    Pin mux slot selection.
+ *        - #uPORT_MuxAlt0            : Default.
+ *        - #uPORT_MuxAlt1            : Set as GPIO.
+ *        - #uPORT_MuxAlt2            : chip-specific.
+ *        - #uPORT_MuxAlt3            : chip-specific.
+ *
+ * @note This function is recommended to reset the pin mux.
+ *
+ */
+static inline void PORT_SetPinMux(PORT_Type *base, uint32_t pin, port_mux_t mux)
+{
+    int reg_num = pin >> 4;
+    /* Positon in the target register */
+    int pos = pin & 0xF;
+    int val = base->PADFUN[reg_num];
+    val &= ~(PORT_PADFUN_MUX_MASK << (pos << 1));
+    base->PADFUN[reg_num] = val | (uint32_t)(mux << (pos << 1));
+}
 
 /*!
- * @brief Sets the port PADCFG and PADFUN register.
+ * @brief Pin configuration.
+ *
+ * This function configures a pin, it sets PADCFG and PADFUN registers with values contained in port_pin_config_t.
  *
  * This is an example to define an input pin or output pin PADCFG and PADFUN configuration.
  * @code
@@ -105,9 +121,9 @@ static inline void PORT_SetPinMux(PORT_Type *base, uint32_t pin, port_mux_t mux)
  * };
  * @endcode
  *
- * @param base   PORT peripheral base pointer.
- * @param pin    PORT pin number.
- * @param config PORT PADCFG and PADFUN register configuration structure.
+ * @param base   Port base pointer.
+ * @param pin    Port pin number.
+ * @param config Pointer to the structure port_pin_config_t.
  */
 static inline void PORT_SetPinConfig(PORT_Type *base, uint32_t pin, const port_pin_config_t *config)
 {
@@ -123,7 +139,10 @@ static inline void PORT_SetPinConfig(PORT_Type *base, uint32_t pin, const port_p
 }
 
 /*!
- * @brief Sets the port PADCFG and PADFUN register for multiple pins.
+ * @brief Multiple pin configuration.
+ *
+ * This function configures multiple pins, it sets PADCFG and PADFUN registers with values contained in port_pin_config_t.
+ * All pins are configured with same values. This function calls the function defined above.
  *
  * This is an example to define input pins or output pins PADCFG and PADFUN configuration.
  * @code
@@ -135,9 +154,9 @@ static inline void PORT_SetPinConfig(PORT_Type *base, uint32_t pin, const port_p
  * };
  * @endcode
  *
- * @param base   PORT peripheral base pointer.
- * @param mask   PORT pin number macro.
- * @param config PORT PADCFG and PADFUN register configuration structure.
+ * @param base   Port base pointer.
+ * @param mask   Mask of the pins to configure.
+ * @param config Pointer to the structure port_pin_config_t.
  */
 static inline void PORT_SetMultiplePinsConfig(PORT_Type *base, uint32_t mask, const port_pin_config_t *config)
 {
@@ -148,34 +167,12 @@ static inline void PORT_SetMultiplePinsConfig(PORT_Type *base, uint32_t mask, co
 }
 
 /*!
- * @brief Configures the pin muxing.
- *
- * @param base  PORT peripheral base pointer.
- * @param pin   PORT pin number.
- * @param mux   pin muxing slot selection.
- *        - #uPORT_MuxAlt0            : Default.
- *        - #uPORT_MuxAlt1            : Set as GPIO.
- *        - #uPORT_MuxAlt2            : chip-specific.
- *        - #uPORT_MuxAlt3            : chip-specific.
- *        This function is recommended to use to reset the pin mux
- *
- */
-static inline void PORT_SetPinMux(PORT_Type *base, uint32_t pin, port_mux_t mux)
-{
-    int reg_num = pin >> 4;
-    /* Positon in the target register */
-    int pos = pin & 0xF;
-    int val = base->PADFUN[reg_num];
-    val &= ~(PORT_PADFUN_MUX_MASK << (pos << 1));
-    base->PADFUN[reg_num] = val | (uint32_t)(mux << (pos << 1));
-}
-
-/*!
  * @brief Configures group pin muxing.
  *
- * @param base  PORT peripheral base pointer.
- * @param mux   pin muxing slot selection array for all pins.
- *        This function is recommended to use to reset the group pin mux
+ * @param base   Port base pointer.
+ * @param mux    Pin muxing slot selection array for all pins.
+ *
+ * @note This function is recommended to reset the group pin mux.
  *
  */
 static inline void PORT_SetGroupPinMux(PORT_Type *base, uint32_t mux[])
