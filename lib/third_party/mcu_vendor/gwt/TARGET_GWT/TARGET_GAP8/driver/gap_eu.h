@@ -128,7 +128,7 @@ static inline void EU_EVT_MaskClr(uint32_t evtMask)
   */
 static inline uint32_t EU_EVT_Wait()
 {
-  return EVT_Read32((uint32_t)EU_CORE_DEMUX->EVENT_WAIT, 0);
+  return EVT_Read32((uint32_t)&EU_CORE_DEMUX->EVENT_WAIT, 0);
 }
 
 /** Put the core to sleep mode until it receives an event and clears the active events
@@ -137,7 +137,7 @@ static inline uint32_t EU_EVT_Wait()
   */
 static inline uint32_t EU_EVT_WaitAndClr()
 {
-  return EVT_Read32((uint32_t)EU_CORE_DEMUX->EVENT_WAIT_CLEAR, 0);
+  return EVT_Read32((uint32_t)&EU_CORE_DEMUX->EVENT_WAIT_CLEAR, 0);
 }
 
 /** Modify the event mask, put the core to sleep mode until it receives an event, clears the active events and restore the mask.

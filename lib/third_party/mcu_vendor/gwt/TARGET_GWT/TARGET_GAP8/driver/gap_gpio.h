@@ -42,7 +42,21 @@
  * Definitions
  ******************************************************************************/
 
-/*! @brief GPIO state definition. */
+/*! @brief Internal resistor pull feature selection */
+typedef enum _gpio_pull
+{
+    uGPIO_PullUpDisable = 0U, /*!< Internal pull-up resistor is disabled. */
+    uGPIO_PullUpEnable = 1U   /*!< Internal pull-up resistor is enabled. */
+} gpio_pull_t;
+
+/*! @brief Configures the drive strength. */
+typedef enum _gpio_drive_strength
+{
+    uGPIO_LowDriveStrength = 0U,  /*!< Low-drive strength is configured. */
+    uGPIO_HighDriveStrength = 1U, /*!< High-drive strength is configured. */
+} gpio_driver_strength_t;
+
+/*! @brief GPIO state definition */
 typedef enum _gpio_pin_state
 {
     uGPIO_LOW  = 0U,   /*!< Set current pin as 0. */
@@ -55,7 +69,6 @@ typedef enum _gpio_pin_direction
     uGPIO_DigitalInput = 0U,  /*!< Set current pin as digital input. */
     uGPIO_DigitalOutput = 1U, /*!< Set current pin as digital output. */
 } gpio_pin_direction_t;
-
 
 /*! @brief Interrupt generation condition. */
 typedef enum _gpio_interrupt
@@ -76,8 +89,11 @@ typedef enum _gpio_interrupt
  */
 typedef struct _gpio_pin_config
 {
-    gpio_pin_direction_t pinDirection; /*!< GPIO direction, input or output. */
-    uint8_t              outputLogic; /*!< Set a default output logic, which has no use if pin direction is input. */
+    gpio_pin_direction_t pinDirection; /*!< GPIO direction, input or output */
+    /* Output configurations; ignore if configured as an input pin */
+    uint8_t outputLogic; /*!< Set a default output logic, which has no use in input */
+    uint8_t pullSelect;    /*!< No-pull/pull-down/pull-up select */
+    uint8_t driveStrength; /*!< Fast/slow drive strength configure */
 } gpio_pin_config_t;
 
 /*******************************************************************************
@@ -140,6 +156,35 @@ static inline void GPIO_SetPinDirection(GPIO_Type *base, uint32_t pin, gpio_pin_
             base->DIR |= (1U << pin);
             break;
     }
+}
+/*!
+ * @brief Sets the gpio PADCFG register.
+ *
+ * This is an example to define an input pin or output pin PADCFG configuration.
+ * @code
+ * // Define a digital input pin PADCFG and PADFUN configuration
+ * gpio_pin_config_t config = {
+ *      uGPIO_DigitalInput,
+ *      0,
+ *      uGPIO_PullUpEnable,
+ *      uGPIO_LowDriveStrength,
+ * };
+ * @endcode
+ *
+ * @param base   GPIO peripheral base pointer.
+ * @param pin    GPIO pin number.
+ * @param config GPIO PADCFG register configuration structure.
+ */
+static inline void GPIO_SetPinConfig(GPIO_Type *base, uint32_t pin, const gpio_pin_config_t *config)
+{
+    /* Set pin pull-up and drive strength*/
+    int reg_num = pin >> 2;
+    int pos = pin & 0x3;
+    int val = base->PADCFG[reg_num];
+    val &= ~((GPIO_PADCFG_DRIVE_STRENGTH_MASK | GPIO_PADCFG_PULL_EN_MASK) << (pos << 3));
+
+    base->PADCFG[reg_num] = val | (uint32_t)((config->pullSelect |
+                                              GPIO_PADCFG_DRIVE_STRENGTH(config->driveStrength)) << (pos << 3));
 }
 
 /*@}*/
@@ -220,15 +265,17 @@ static inline void GPIO_TogglePinsOutput(GPIO_Type *base, uint32_t mask)
  * This function returns the current logical input value of a GPIO pin.
  *
  * @param base GPIO peripheral base pointer.
- * @param pin  GPIO pin number.
- *
- * @return Current logical input value of the GPIO pin.
+ * @param pin     GPIO pin number
+ * @retval GPIO port input value
  *        - 0: corresponding pin input low-logic level.
  *        - 1: corresponding pin input high-logic level.
  */
 static inline uint32_t GPIO_ReadPinInput(GPIO_Type *base, uint32_t pin)
 {
-    return (((base->IN) >> pin) & 0x01U);
+    if ((((base->DIR) >> pin) & 0x1) == uGPIO_DigitalOutput)
+        return (((base->OUT) >> pin) & 0x01U);
+    else
+        return (((base->IN) >> pin) & 0x01U);
 }
 
 /*@}*/

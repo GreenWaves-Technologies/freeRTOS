@@ -195,7 +195,6 @@ void prvSetupMPU( void )
     uint32_t	base_l2	 = ( 0x1C000000ul );
     uint32_t	base_fc	 = FC_BASE;
     uint32_t	base_apb = SOC_PERI_BASE;
-
     /* Setup APB Filter. */
     {
 	/* Setup APB_FC_TCDM_AREA. 0x1B00 0000 - 0x1B10 0000 */
@@ -289,7 +288,6 @@ void prvSetupMPU( void )
     /* Setup L2 Filter. */
     {
 	/* Setup L2. Size(L2)=512kB=0x80000  0x1C00 0000 - 0x1C08 0000 */
-
 	MPU->L2_RULE[0] = (
 	    ( GAP_MPU_L2_L2_AREA << MPU_TYPE_RULE_AREA_Pos)
 	    | ( ( ( base_l2 ) >> GAP_MPU_PAGE_SIZE_LOG2 ) << MPU_TYPE_RULE_BASE_Pos )

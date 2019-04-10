@@ -44,10 +44,10 @@ __DYNAMIC  =  0;
 MEMORY
 {
   L2                : ORIGIN = 0x1C000000, LENGTH = 0x80000
-  L1_sram           : ORIGIN = 0x10000004, LENGTH = 0xfffc
-  L1_sram_aliased   : ORIGIN = 0x00000004, LENGTH = 0xfffc
-  FC_tcdm           : ORIGIN = 0x1B000004, LENGTH = 0x3ffc
-  FC_tcdm_aliased   : ORIGIN = 0x00000004, LENGTH = 0x3ffc
+  L1_sram           : ORIGIN = 0x10000000, LENGTH = 0x10000
+  L1_sram_aliased   : ORIGIN = 0x00000000, LENGTH = 0x10000
+  FC_tcdm           : ORIGIN = 0x1B000000, LENGTH = 0x4000
+  FC_tcdm_aliased   : ORIGIN = 0x00000000, LENGTH = 0x4000
 }
 
 __L1_STACK_SIZE      = 0x400;
@@ -244,7 +244,7 @@ SECTIONS
        *(.fcTcdm_g.*)
      } > FC_tcdm
 
-    .fcbss (ORIGIN(FC_tcdm_aliased) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny)) : AT(ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny))
+    .fcbss (ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny)) : AT(ORIGIN(FC_tcdm) + SIZEOF(.fcTcdm_g) + SIZEOF(.fcTcdm) + SIZEOF(.fcTcdmTiny) + SIZEOF(.l1FcTiny))
     {
         . = ALIGN(4);
         __fc_bss_start__ = .;
@@ -255,7 +255,7 @@ SECTIONS
         __fc_stack_end__ = . + __IRQ_STACK_SIZE;
         __fc_stack_start__ = . + __IRQ_STACK_SIZE + __FC_STACK_SIZE;
         __fc_bss_end__ = . + __IRQ_STACK_SIZE + __FC_STACK_SIZE;
-     } > FC_tcdm_aliased
+     } > FC_tcdm
 
      __fc_bss_size__ = __fc_bss_end__ - __fc_bss_start__;
      __irq_stack_size__ = __IRQ_STACK_SIZE;

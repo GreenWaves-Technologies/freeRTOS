@@ -103,6 +103,7 @@ static void CLUSTER_UnSetCoreStack() {
     if(!__core_ID()) {
         /* master core */
         cluster_core_stack_size = 1;
+        /* Cluster calls FC */
 
         /* Cluster calls FC */
         EU_FC_EVT_TrigSet(CLUSTER_NOTIFY_FC_EVENT, 0);
@@ -121,19 +122,21 @@ static inline void CLUSTER_FC2CL_StackInit(int cid, int nbCores, uint32_t stacks
     EU_CLUSTER_EVT_TrigSet(FC_NOTIFY_CLUSTER_EVENT, 0);
 }
 
-void CLUSTER_Start(int cid, int nbCores) {
+void CLUSTER_Start(int cid, int nbCores, int control_icache_seperation) {
 
     if(!cluster_is_on) {
+#ifndef __PLATFORM_GVSOC__
         PMU_ClusterPowerOn();
+#endif
 
         /*
          * Fetch all cores, they will directly jump to the PE loop
          * waiting from orders through the dispatcher
          */
-        for (int i = 0; i < CLUSTER_CORES_NUM; i++) {
+        for (int i = 0; i < nbCores; i++) {
             SCB->BOOT_ADDR[i] = 0x1C000100;
         }
-        SCB->FETCH_EN = 0xFF;
+        SCB->FETCH_EN = (1 << nbCores) - 1;
 
         /* Now do the runtime initializations */
         /* In case the chip does not support L1 preloading, the initial L1 data are in L2, we need to copy them to L1 */
@@ -203,7 +206,9 @@ void CLUSTER_Stop(int cid) {
 
     SCB->FETCH_EN = 0x0;
 
+#ifndef __PLATFORM_GVSOC__
     PMU_ClusterPowerOff();
+#endif
 
     cluster_is_on = 0;
     cluster_is_init = 0;

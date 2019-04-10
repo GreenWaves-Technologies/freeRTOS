@@ -63,6 +63,7 @@
 	.extern CLUSTER_SleepWait
 	.extern SystemInit
 	.extern main
+        .extern exit
 	.extern ill_ins_handler
 	.extern ecall_handler
 	.extern pendSV_handler
@@ -108,10 +109,12 @@ _fill_zero: /* Init BSS section */
   	addi  a0, a0, 4
   	bltu  a0, a1, .LC2
 
-	jal SystemInit
+	jal ra, SystemInit
 
 _jump2main: /* Jump to main */
-	jal main
+	jal ra, main
+        li a0, 0x0
+        jal ra, exit
 	.endfunc
 /******************************************************************************/
 
