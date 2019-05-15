@@ -121,6 +121,8 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack,
     {
 	pxTopOfStack--;
 	*pxTopOfStack = ( StackType_t ) pxCode; /* MEPC */
+        pxTopOfStack--;
+	*pxTopOfStack = ( StackType_t ) portINITIAL_MSTATUS; /* MSTATUS */
     }
     /* General purpose registers saved. sp reg stored in Task Control Block. */
     {

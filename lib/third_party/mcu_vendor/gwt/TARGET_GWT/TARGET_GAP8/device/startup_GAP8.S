@@ -113,7 +113,7 @@ _fill_zero: /* Init BSS section */
 
 _jump2main: /* Jump to main */
 	jal ra, main
-        li a0, 0x0
+        /* Exit. */
         jal ra, exit
 	.endfunc
 /******************************************************************************/
@@ -133,7 +133,7 @@ _jump2main: /* Jump to main */
 	.section .vectors_M, "ax"
 	.option norvc;
 
-	/* PendSV Handler*/
+	/* PendSV Handler. */
 	.org 0x1c
 	j pendSV_handler
 

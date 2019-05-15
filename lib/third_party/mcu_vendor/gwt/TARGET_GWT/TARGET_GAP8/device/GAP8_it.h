@@ -68,6 +68,7 @@ uint32_t _procid( void );
 uint32_t _clusterid( void );
 void _isr_default( void );
 
+void vSetPendSV();
 #ifdef __cplusplus
 }
 #endif

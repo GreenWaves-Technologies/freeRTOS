@@ -30,6 +30,7 @@
  *******************************************************************************************/
 
 #include "GAP8_it.h"
+#include "gap_eu.h"
 
 /* Ecall Table. */
 const void *_ecall_vector[NB_ECALL] = {
@@ -47,6 +48,11 @@ void HardFault_Handler( void )
 {
 }
 
+void vSetPendSV()
+{
+    NVIC->MASK_IRQ_OR = (0x1 << PendSV_IRQn);
+    EU_FC_EVT_TrigSet(PendSV_IRQn, 0);
+}
 
 /****************
  * Syscalls.
@@ -120,4 +126,3 @@ void _isr_default( void )
     __asm__ volatile ( "nop" );
     return;
 }
-

@@ -71,11 +71,13 @@ typedef uint32_t TickType_t;
 
 /* Scheduler utilities. Others in port_asm.S. */
 extern void vPortYield( void );
-#define portYIELD()                                      ( vPortYield() )
+extern void vSetPendSV();
 
-#define portEND_SWITCHING_ISR( xSwitchRequired )	 { if( xSwitchRequired != pdFALSE ) portYIELD(); }
+#define portYIELD()                                      ( vSetPendSV() )
+#define portEND_SWITCHING_ISR( xSwitchRequired )	 { if( xSwitchRequired != pdFALSE ) vSetPendSV(); }
 #define portYIELD_FROM_ISR( x )				 ( portEND_SWITCHING_ISR( x ) )
 
+#define portYIELD_WITHIN_API()                           ( vSetPendSV() )
 /*-----------------------------------------------------------*/
 
 /* Critical section management. */

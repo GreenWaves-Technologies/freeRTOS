@@ -86,23 +86,27 @@
 	sw s10, 26*4(sp)
 	sw s11, 27*4(sp)
 
+        /* MSTATUS */
+        csrr t0, mstatus
+        sw t0, 28*4(sp)
+
         /* MEPC */
         csrr t0, mepc
-        sw t0, 28*4(sp)
+        sw t0, 29*4(sp)
 
         /* HW Loop regs. */
         csrr t0, 0x7B0
-        sw t0, 29*4(sp)
+        sw t0, 30*4(sp)
         csrr t1, 0x7B1
-        sw t1, 30*4(sp)
+        sw t1, 31*4(sp)
         csrr t2, 0x7B2
-        sw t2, 31*4(sp)
+        sw t2, 32*4(sp)
         csrr t0, 0x7B4
-        sw t0, 32*4(sp)
+        sw t0, 33*4(sp)
         csrr t1, 0x7B5
-        sw t1, 33*4(sp)
+        sw t1, 34*4(sp)
         csrr t2, 0x7B6
-        sw t2, 34*4(sp)
+        sw t2, 35*4(sp)
 	.endm
 /******************************************************************************/
 
@@ -113,22 +117,26 @@
         lw sp, 0*0(tp)
 
         /* HW Loop regs. */
-        lw t2, 34*4(sp)
+        lw t2, 35*4(sp)
         csrw 0x7B6, t2
-        lw t1, 33*4(sp)
+        lw t1, 34*4(sp)
         csrw 0x7B5, t1
-        lw t0, 32*4(sp)
+        lw t0, 33*4(sp)
         csrw 0x7B4, t0
-        lw t2, 31*4(sp)
+        lw t2, 32*4(sp)
         csrw 0x7B2, t2
-        lw t1, 30*4(sp)
+        lw t1, 31*4(sp)
         csrw 0x7B1, t1
-        lw t0, 29*4(sp)
+        lw t0, 30*4(sp)
         csrw 0x7B0, t0
 
         /* MEPC */
-	lw t0, 28*4(sp)
+	lw t0, 29*4(sp)
 	csrw mepc, t0
+
+        /* MSTATUS */
+	lw t0, 28*4(sp)
+	csrw mstatus, t0
 
         /* General purpose registers. */
 	lw s11, 27*4(sp)
@@ -160,7 +168,7 @@
 	lw a0, 1*4(sp)
 	lw ra, 0*4(sp)
 
-        addi sp, sp, (+34*4)
+        addi sp, sp, (+35*4)
         mret
 	.endm
 /******************************************************************************/
@@ -221,7 +229,7 @@
 
 	/* SysTick_Handler. */
         DECLARE systick_handler
-        addi sp, sp, (-34*4)
+        addi sp, sp, (-35*4)
         sw ra, 0*4(sp)
         sw a0, 1*4(sp)
         sw a1, 2*4(sp)
@@ -253,12 +261,41 @@ _no_switch:
         lw a3, 4*4(sp)
         lw a4, 5*4(sp)
         lw a5, 6*4(sp)
-        addi sp, sp, (+34*4)
+        addi sp, sp, (+35*4)
         mret
         .endfunc
 
 	/* PendSV_Handler. */
 	DECLARE pendSV_handler
+        addi sp, sp, (-35*4)
+        sw ra, 0*4(sp)
+        sw a0, 1*4(sp)
+        sw a1, 2*4(sp)
+        sw a2, 3*4(sp)
+        sw a3, 4*4(sp)
+        sw a4, 5*4(sp)
+        sw a5, 6*4(sp)
+        lw tp, pxCurrentTCB
+        sw sp, 0*0(tp)
+
+        /* ISR Stack. */
+        la sp, xISRStack
+        lw sp, 0*0(sp)
+        jal ra, vTaskSwitchContext
+        lw a0, pxCurrentTCB
+        beq tp, a0, _no_switch_pendsv
+        SAVE_CONTEXT
+        RESTORE_CONTEXT
+_no_switch_pendsv:
+        lw sp, 0*0(tp)
+        lw ra, 0*4(sp)
+        lw a0, 1*4(sp)
+        lw a1, 2*4(sp)
+        lw a2, 3*4(sp)
+        lw a3, 4*4(sp)
+        lw a4, 5*4(sp)
+        lw a5, 6*4(sp)
+        addi sp, sp, (+35*4)
 	mret
 	.endfunc
 /******************************************************************************/
@@ -275,7 +312,7 @@ _no_switch:
 /******************************************************************************/
 	.macro SAVE_CONTEXT_YIELD
         /* General purpose registers. */
-        addi sp, sp, (-34*4)
+        addi sp, sp, (-35*4)
         sw ra, 0*4(sp)
         sw a0, 1*4(sp)
         sw a1, 2*4(sp)
@@ -305,23 +342,27 @@ _no_switch:
 	sw s10, 26*4(sp)
 	sw s11, 27*4(sp)
 
+        /* MSTATUS */
+        csrr t0, mstatus
+        sw t0, 28*4(sp)
+
         /* MEPC */
         csrr t0, mepc
-        sw t0, 28*4(sp)
+        sw t0, 29*4(sp)
 
         /* HW Loop regs. */
         csrr t0, 0x7B0
-        sw t0, 29*4(sp)
+        sw t0, 30*4(sp)
         csrr t1, 0x7B1
-        sw t1, 30*4(sp)
+        sw t1, 31*4(sp)
         csrr t2, 0x7B2
-        sw t2, 31*4(sp)
+        sw t2, 32*4(sp)
         csrr t0, 0x7B4
-        sw t0, 32*4(sp)
+        sw t0, 33*4(sp)
         csrr t1, 0x7B5
-        sw t1, 33*4(sp)
+        sw t1, 34*4(sp)
         csrr t2, 0x7B6
-        sw t2, 34*4(sp)
+        sw t2, 35*4(sp)
 	.endm
 /******************************************************************************/
 
@@ -329,22 +370,26 @@ _no_switch:
 	.macro RESTORE_CONTEXT_YIELD
 
         /* HW Loop regs. */
-        lw t2, 34*4(sp)
+        lw t2, 35*4(sp)
         csrw 0x7B6, t2
-        lw t1, 33*4(sp)
+        lw t1, 34*4(sp)
         csrw 0x7B5, t1
-        lw t0, 32*4(sp)
+        lw t0, 33*4(sp)
         csrw 0x7B4, t0
-        lw t2, 31*4(sp)
+        lw t2, 32*4(sp)
         csrw 0x7B2, t2
-        lw t1, 30*4(sp)
+        lw t1, 31*4(sp)
         csrw 0x7B1, t1
-        lw t0, 29*4(sp)
+        lw t0, 30*4(sp)
         csrw 0x7B0, t0
 
         /* MEPC */
-	lw t0, 28*4(sp)
+	lw t0, 29*4(sp)
 	csrw mepc, t0
+
+        /* MSTATUS */
+	lw t0, 28*4(sp)
+	csrw mstatus, t0
 
         /* General purpose registers. */
 	lw s11, 27*4(sp)
@@ -375,7 +420,7 @@ _no_switch:
 	lw a1, 2*4(sp)
 	lw a0, 1*4(sp)
 	lw ra, 0*4(sp)
-        addi sp, sp, (+34*4)
+        addi sp, sp, (+35*4)
 	.endm
 /******************************************************************************/
 
