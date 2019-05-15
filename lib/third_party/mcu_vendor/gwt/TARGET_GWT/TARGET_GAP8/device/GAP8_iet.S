@@ -271,3 +271,135 @@ _no_switch:
 	j ill_ins_handler
 	.endfunc
 /******************************************************************************/
+
+/******************************************************************************/
+	.macro SAVE_CONTEXT_YIELD
+        /* General purpose registers. */
+        addi sp, sp, (-34*4)
+        sw ra, 0*4(sp)
+        sw a0, 1*4(sp)
+        sw a1, 2*4(sp)
+        sw a2, 3*4(sp)
+        sw a3, 4*4(sp)
+        sw a4, 5*4(sp)
+        sw a5, 6*4(sp)
+	sw a6, 7*4(sp)
+	sw a7, 8*4(sp)
+        sw t0, 9*4(sp)
+	sw t1, 10*4(sp)
+	sw t2, 11*4(sp)
+	sw t3, 12*4(sp)
+	sw t4, 13*4(sp)
+	sw t5, 14*4(sp)
+	sw t6, 15*4(sp)
+	sw s0, 16*4(sp)
+	sw s1, 17*4(sp)
+	sw s2, 18*4(sp)
+	sw s3, 19*4(sp)
+	sw s4, 20*4(sp)
+	sw s5, 21*4(sp)
+	sw s6, 22*4(sp)
+	sw s7, 23*4(sp)
+	sw s8, 24*4(sp)
+	sw s9, 25*4(sp)
+	sw s10, 26*4(sp)
+	sw s11, 27*4(sp)
+
+        /* MEPC */
+        csrr t0, mepc
+        sw t0, 28*4(sp)
+
+        /* HW Loop regs. */
+        csrr t0, 0x7B0
+        sw t0, 29*4(sp)
+        csrr t1, 0x7B1
+        sw t1, 30*4(sp)
+        csrr t2, 0x7B2
+        sw t2, 31*4(sp)
+        csrr t0, 0x7B4
+        sw t0, 32*4(sp)
+        csrr t1, 0x7B5
+        sw t1, 33*4(sp)
+        csrr t2, 0x7B6
+        sw t2, 34*4(sp)
+	.endm
+/******************************************************************************/
+
+/******************************************************************************/
+	.macro RESTORE_CONTEXT_YIELD
+
+        /* HW Loop regs. */
+        lw t2, 34*4(sp)
+        csrw 0x7B6, t2
+        lw t1, 33*4(sp)
+        csrw 0x7B5, t1
+        lw t0, 32*4(sp)
+        csrw 0x7B4, t0
+        lw t2, 31*4(sp)
+        csrw 0x7B2, t2
+        lw t1, 30*4(sp)
+        csrw 0x7B1, t1
+        lw t0, 29*4(sp)
+        csrw 0x7B0, t0
+
+        /* MEPC */
+	lw t0, 28*4(sp)
+	csrw mepc, t0
+
+        /* General purpose registers. */
+	lw s11, 27*4(sp)
+	lw s10, 26*4(sp)
+	lw s9, 25*4(sp)
+	lw s8, 24*4(sp)
+	lw s7, 23*4(sp)
+	lw s6, 22*4(sp)
+	lw s5, 21*4(sp)
+	lw s4, 20*4(sp)
+	lw s3, 19*4(sp)
+	lw s2, 18*4(sp)
+	lw s1, 17*4(sp)
+	lw s0, 16*4(sp)
+	lw t6, 15*4(sp)
+	lw t5, 14*4(sp)
+	lw t4, 13*4(sp)
+	lw t3, 12*4(sp)
+	lw t2, 11*4(sp)
+	lw t1, 10*4(sp)
+	lw t0, 9*4(sp)
+	lw a7, 8*4(sp)
+	lw a6, 7*4(sp)
+	lw a5, 6*4(sp)
+	lw a4, 5*4(sp)
+	lw a3, 4*4(sp)
+	lw a2, 3*4(sp)
+	lw a1, 2*4(sp)
+	lw a0, 1*4(sp)
+	lw ra, 0*4(sp)
+        addi sp, sp, (+34*4)
+	.endm
+/******************************************************************************/
+
+        DECLARE vPortYield
+        /* Disable IRQ, especially because of SysTick. */
+        csrci mstatus, 8
+        /* Save current context. */
+        SAVE_CONTEXT_YIELD
+        /*
+         * Save sp of current context
+         * Look for next context
+         * Restore sp of next context.
+        */
+        lw tp, pxCurrentTCB
+        sw sp, 0*0(tp)
+        jal ra, vTaskSwitchContext
+        lw tp, pxCurrentTCB
+        lw sp, 0*0(tp)
+        /* Restore next context. */
+        RESTORE_CONTEXT_YIELD
+        /* Enable IRQ, disabled before entering. */
+        csrsi mstatus, 8
+        /* Resume execution. */
+        jr ra
+        .endfunc
+
+/******************************************************************************/

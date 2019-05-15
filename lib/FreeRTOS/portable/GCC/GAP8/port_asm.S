@@ -213,12 +213,4 @@
 	portRESTORE_CONTEXT
 	.endfunc
 
-
-	/* vPortYield Function. */
-	DECLARE vPortYield
-	portSAVE_CONTEXT
-	portSAVE_RA
-	jal ra, vTaskSwitchContext
-	portRESTORE_CONTEXT
-	.endfunc
 /******************************************************************************/

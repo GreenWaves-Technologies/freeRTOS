@@ -127,6 +127,7 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack,
 	pxTopOfStack -= 27; /* a1-a7 + t0-t6 +  s0-11 */
 	*pxTopOfStack = ( StackType_t ) pvParameters; /* a0 */
 	pxTopOfStack -= 1; /* ra */
+        *pxTopOfStack = ( StackType_t ) pxCode; /* ra */
     }
 
 /*
@@ -372,16 +373,13 @@ void vPortExit_Critical( void )
 
 uint32_t uPortSet_Interrupt_Mask_From_ISR( void )
 {
-    uint32_t ulIrqMask = 0;
-    /* Disable all other interrupts. */
-    portDISABLE_INTERRUPTS();
-    __asm__ volatile("csrr %0, mstatus":"=r" (ulIrqMask) );
-    return ulIrqMask;
+    /* No nested IRQ, so IRQ are either enabled or disabled.  */
+    return 0;
 }
 /*-----------------------------------------------------------*/
 
 void vPortClear_Interrupt_Mask_From_ISR( uint32_t irqSet )
 {
-    portENABLE_INTERRUPTS();
+    /* No nested IRQ, so IRQ are either enabled or disabled.  */
 }
 /*-----------------------------------------------------------*/
