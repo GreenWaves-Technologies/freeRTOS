@@ -15,26 +15,34 @@
 
 #ifdef FEATURE_CLUSTER
 
-malloc_t __l1_malloc_cluster;
+/*******************************************************************************
+ * Variables, macros, structures,... definition
+ ******************************************************************************/
 
-void *L1_Malloc(int size)
+static malloc_t __l1_malloc_cluster; /*!< Cluster memory allocator. */
+
+/*******************************************************************************
+ * Function definition
+ ******************************************************************************/
+
+void *L1_Malloc(int32_t size)
 {
     return __malloc(&__l1_malloc_cluster, size);
 }
 
-void L1_MallocFree(void *_chunk, int size)
+void L1_MallocFree(void *_chunk, int32_t size)
 {
     __malloc_free(&__l1_malloc_cluster, _chunk, size);
 }
 
-void *L1_MallocAlign(int size, int align)
+void *L1_MallocAlign(int32_t size, int32_t align)
 {
     return __malloc_align(&__l1_malloc_cluster, size, align);
 }
 
 void L1_MallocInit()
 {
-    __malloc_init(&__l1_malloc_cluster, (void*)&__heapsram_start, (uint32_t)&__heapsram_size);
+    __malloc_init(&__l1_malloc_cluster, (void *) &__heapsram_start, (int32_t) &__heapsram_size);
 }
 
 #endif

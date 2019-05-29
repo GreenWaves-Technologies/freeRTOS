@@ -27,10 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _GAP_FC_MALLOC_H_
-#define _GAP_FC_MALLOC_H_
 
-#include "cmsis.h"
+#ifndef __GAP_FC_MALLOC_H__
+#define __GAP_FC_MALLOC_H__
+
 #include "gap_util.h"
 #include "gap_malloc.h"
 
@@ -44,13 +44,11 @@
  * Variables, macros, structures,... definitions
  ******************************************************************************/
 
-/* FC heap */
 extern char __heapfcram_start; /*!< FC Heap start address. */
 extern char __heapfcram_size;  /*!< FC Heap size. */
 
-/* FC Free fucntion alias */
+/*! @brief FC Free function alias. */
 #define FC_Free     FC_MallocFree
-
 
 /*******************************************************************************
  * APIs
@@ -78,7 +76,7 @@ void FC_MallocInit();
  * @return memory address pointer.
  *
  */
-void *FC_Malloc(int size);
+void *FC_Malloc(int32_t size);
 
 /*!
  * @brief Allocate the fc heap memory with aligned size.
@@ -89,7 +87,7 @@ void *FC_Malloc(int size);
  * @return memory address pointer.
  *
  */
-void *FC_MallocAlign(int size, int align);
+void *FC_MallocAlign(int32_t size, int32_t align);
 
 /*!
  * @brief Free the fc malloc.
@@ -100,7 +98,7 @@ void *FC_MallocAlign(int size, int align);
  * @param size  Size of memory need to free.
  *
  */
-void FC_MallocFree(void *_chunk, int size);
+void FC_MallocFree(void *_chunk, int32_t size);
 
 
 #if defined(__cplusplus)
@@ -109,4 +107,4 @@ void FC_MallocFree(void *_chunk, int size);
 
 /* @} */
 
-#endif /*_GAP_FC_MALLOC_H_*/
+#endif /*__GAP_FC_MALLOC_H__*/

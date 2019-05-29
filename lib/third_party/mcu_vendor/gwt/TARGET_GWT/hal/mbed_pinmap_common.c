@@ -13,8 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * GWT modifications : few updates are done to adapt for FreeRTOS.
+ * Remove mbed_error.h include.
+ * Move MBED_ERROR1 to 0.
+ */
+
+#ifdef __FREERTOS__
+#include "FreeRTOSConfig.h"
+#define MBED_ERROR1(...) ((void) 0)
+#else
+#include "mbed_assert.h"
+#endif
 #include "pinmap.h"
-#define error( x ) ( ( void ) x )
 
 void pinmap_pinout(PinName pin, const PinMap *map)
 {
@@ -31,7 +42,7 @@ void pinmap_pinout(PinName pin, const PinMap *map)
         }
         map++;
     }
-    error("could not pinout");
+    MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_PLATFORM, MBED_ERROR_CODE_PINMAP_INVALID), "could not pinout", pin);
 }
 
 uint32_t pinmap_merge(uint32_t a, uint32_t b)
@@ -50,7 +61,7 @@ uint32_t pinmap_merge(uint32_t a, uint32_t b)
     }
 
     // mis-match error case
-    error("pinmap mis-match");
+    MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_PLATFORM, MBED_ERROR_CODE_PINMAP_INVALID), "pinmap mis-match", a);
     return (uint32_t)NC;
 }
 
@@ -74,7 +85,7 @@ uint32_t pinmap_peripheral(PinName pin, const PinMap *map)
     }
     peripheral = pinmap_find_peripheral(pin, map);
     if ((uint32_t)NC == peripheral) { // no mapping available
-        error("pinmap not found for peripheral");
+        MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_PLATFORM, MBED_ERROR_CODE_PINMAP_INVALID), "pinmap not found for peripheral", peripheral);
     }
     return peripheral;
 }
@@ -99,7 +110,7 @@ uint32_t pinmap_function(PinName pin, const PinMap *map)
     }
     function = pinmap_find_function(pin, map);
     if ((uint32_t)NC == function) { // no mapping available
-        error("pinmap not found for function");
+        MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_PLATFORM, MBED_ERROR_CODE_PINMAP_INVALID), "pinmap not found for function", function);
     }
     return function;
 }

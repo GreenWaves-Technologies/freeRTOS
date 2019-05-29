@@ -27,13 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _GAP_L1_MALLOC_H_
-#define _GAP_L1_MALLOC_H_
 
-#include "cmsis.h"
+#ifndef __GAP_L1_MALLOC_H__
+#define __GAP_L1_MALLOC_H__
+
 #include "gap_util.h"
 #include "gap_malloc.h"
-
 
 #ifdef FEATURE_CLUSTER
 
@@ -43,19 +42,19 @@
  */
 
 /*******************************************************************************
- * Definitions
+ * Variables, macros, structures,... definitions
  ******************************************************************************/
 
-/* CLUSTER L1 heap */
-extern char  __heapsram_start;
-extern char  __heapsram_size;
+extern char  __heapsram_start;  /*!< Cluster Heap start address. */
+extern char  __heapsram_size;   /*!< Cluster Heap size. */
 
-/* L1 Free function alias */
+/*! @brief L1 Free function alias. */
 #define L1_Free     L1_MallocFree
 
 /*******************************************************************************
  * APIs
  ******************************************************************************/
+
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
@@ -83,7 +82,7 @@ void L1_MallocInit();
  * @return memory address pointer.
  *
  */
-void *L1_Malloc(int size);
+void *L1_Malloc(int32_t size);
 
 /*!
  * @brief Allocate the L1 heap memory with aligned size.
@@ -94,7 +93,7 @@ void *L1_Malloc(int size);
  * @return memory address pointer.
  *
  */
-void *L1_MallocAlign(int size, int align);
+void *L1_MallocAlign(int32_t size, int32_t align);
 
 /*!
  * @brief Free the L1 malloc.
@@ -105,7 +104,7 @@ void *L1_MallocAlign(int size, int align);
  * @param size  Size of memory need to free.
  *
  */
-void L1_MallocFree(void *_chunk, int size);
+void L1_MallocFree(void *_chunk, int32_t size);
 
 /* @} */
 
@@ -116,4 +115,5 @@ void L1_MallocFree(void *_chunk, int size);
 /* @} */
 
 #endif /* FEATURE_CLUSTER*/
-#endif /*_GAP_L1_MALLOC_H_*/
+
+#endif /*__GAP_L1_MALLOC_H__*/

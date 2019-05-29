@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pinmap.h"
-#include "gap_port.h"
+/*
+ * GWT modifications : few updates are done to adapt for FreeRTOS.
+ * Remove mbed assert for FreeRTOS native assert function.
+ */
+
 #ifdef __FREERTOS__
 #include "FreeRTOSConfig.h"
 #define MBED_ASSERT configASSERT
+#else
+#include "mbed_assert.h"
 #endif
+#include "pinmap.h"
+#include "gap_port.h"
 
 /* Array of PORT peripheral base address. */
 static PORT_Type *const port_addrs[] = PORT_BASE_PTRS;
