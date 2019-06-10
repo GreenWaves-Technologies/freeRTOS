@@ -166,23 +166,31 @@ void UDMA_Deinit(UDMA_Type *base)
     udmaInit--;
 }
 
-void UDMA_BlockWait()
+void UDMA_BlockWait(int32_t evt)
 {
     /* Disable IRQ */
     int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
     NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
 
     int event = 0;
-    do {
-        event = EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
-    } while (!(event & (1 << FC_SOC_EVENT_IRQn)));
+    int32_t cur_event = 0;
+    do
+    {
+        do
+        {
+            event = EU_EVT_MaskWaitAndClr(1 << FC_SOC_EVENT_IRQn);
+        } while (!(event & (1 << FC_SOC_EVENT_IRQn)));
 
-    /* Pop a event. */
-    EU_SOC_EVENTS->CURRENT_EVENT;
+        /* Pop an event. */
+        cur_event = (EU_SOC_EVENTS->CURRENT_EVENT & 0xFF);
 
-    /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
-       generating an event as soon as the FIFO is not empty */
-    EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
+        /* Now that we popped the element, we can clear the soc event FIFO event as the FIFO is
+           generating an event as soon as the FIFO is not empty */
+        EU_CORE_DEMUX->BUFFER_CLEAR = (1 << FC_SOC_EVENT_IRQn);
+
+        /* Execute a handler in case of an asyncronous transfer. */
+        UDMA_EventHandler(cur_event, 0);
+    } while (evt != cur_event);
 
     /* Restore IRQ */
     if (irq_en)
@@ -195,10 +203,13 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
     int irq_en = NVIC_GetEnableIRQ(FC_SOC_EVENT_IRQn);
     NVIC_DisableIRQ(FC_SOC_EVENT_IRQn);
 
+    uint32_t index = UDMA_GetInstance(base);
+    int32_t event = index << 1;
+
     if (info->isTx) {
-        assert(!UDMA_TXBusy(base));
+        while(UDMA_TXBusy(base));
     } else {
-        assert(!UDMA_RXBusy(base));
+        while(UDMA_RXBusy(base));
     }
 
     /* Hyperbus ctrl */
@@ -228,6 +239,7 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
         base->TX_SADDR = info->dataAddr;
         base->TX_SIZE  = info->dataSize;
         base->TX_CFG   = info->configFlags;
+        event += 1;
     } else {
         base->RX_SADDR = info->dataAddr;
         base->RX_SIZE  = info->dataSize;
@@ -237,13 +249,13 @@ status_t UDMA_BlockTransfer(UDMA_Type *base, udma_req_info_t *info, UDMAHint hin
 
     if (hint == UDMA_WAIT) {
         /* Wait TX/RX finished */
-        UDMA_BlockWait();
+        UDMA_BlockWait(event);
     } else if (hint == UDMA_WAIT_RX) {
         /* Wait TX finished */
-        UDMA_BlockWait();
+        UDMA_BlockWait(event-1);
 
         /* Wait util previous RX is finished */
-        UDMA_BlockWait();
+        UDMA_BlockWait(event);
     }
 
     /* Restore IRQ */

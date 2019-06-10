@@ -74,7 +74,7 @@ void vPortClear_Interrupt_Mask_From_ISR( uint32_t irqSet );
 
 
 /* Variables. */
-volatile uint32_t ulCriticalNesting = 9999ul;
+volatile uint32_t ulCriticalNesting = 0ul;
 
 /*
  * ulCriticalNesting : not necessary.
