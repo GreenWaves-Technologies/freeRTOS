@@ -87,14 +87,10 @@ void spi_init(spi_t *obj, PinName mosi, PinName miso, PinName sclk, PinName ssel
     SPI_MasterGetDefaultConfig(&master_config);
 
     /* determine the SPI to use */
-    #if defined(__GAP8__)
     if(ssel == SPI0_CSN1 || ssel == SPI1_CSN1_B2 || ssel == SPI1_CSN1_B15)
         master_config.whichCsn = uSPI_csn1;
     else
         master_config.whichCsn = uSPI_csn0;
-    #elif defined(__GAP9__)
-        master_config.whichCsn = uSPI_csn0;
-    #endif
 
     /* Set the transfer status to idle */
     spi_obj->status = uSPI_Idle;

@@ -159,11 +159,7 @@ int hyperbus_read(hyperbus_t *obj, const int addr, char reg_access, char device)
 
     hyperbus_block_read(obj, addr, &HYPERBUS_READ_VALUE, 2, reg_access, device);
 
-    #if defined(__GAP8__)
     return ((HYPERBUS_READ_VALUE >> 16) & 0xFFFF);
-    #elif defined(__GAP9__)
-    return (HYPERBUS_READ_VALUE & 0xFFFF);
-    #endif
 }
 
 int hyperbus_block_write(hyperbus_t *obj, const int addr, const void *tx, size_t tx_length, char reg_access, char device) {

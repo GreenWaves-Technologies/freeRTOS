@@ -75,7 +75,6 @@ void gpio_dir(gpio_t *obj, PinDirection direction)
     /* Clock Gating enable for read */
     base->EN  |= (1U << pin);
 
-#if defined(__GAP8__)
     switch (direction) {
         case PIN_INPUT:
             base->DIR &= ~(1U << pin);
@@ -84,16 +83,6 @@ void gpio_dir(gpio_t *obj, PinDirection direction)
             base->DIR |= (1U << pin);
             break;
     }
-#elif defined(__GAP9__)
-    switch (direction) {
-        case PIN_OUTPUT:
-            base->DIR &= ~(1U << pin);
-            break;
-        case PIN_INPUT:
-            base->DIR |= (1U << pin);
-            break;
-    }
-#endif
 }
 
 void gpio_write(gpio_t *obj, int value)

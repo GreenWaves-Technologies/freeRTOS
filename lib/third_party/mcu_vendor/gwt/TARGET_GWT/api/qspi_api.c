@@ -131,14 +131,10 @@ qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinN
     SPI_MasterGetDefaultConfig(&master_config);
 
     /* determine the SPI to use */
-    #if defined(__GAP8__)
     if(ssel == SPI0_CSN1)
         master_config.whichCsn = uSPI_csn1;
     else
         master_config.whichCsn = uSPI_csn0;
-    #elif defined(__GAP9__)
-        master_config.whichCsn = uSPI_csn0;
-    #endif
 
     /* Master config */
     master_config.cpol = (mode & 0x2) ? uSPI_ClockPolarityActiveLow : uSPI_ClockPolarityActiveHigh;
