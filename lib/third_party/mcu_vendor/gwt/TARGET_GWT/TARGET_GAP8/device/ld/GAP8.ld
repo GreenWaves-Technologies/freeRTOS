@@ -246,8 +246,6 @@ SECTIONS
         __heapfcram_start = .;
         __irq_stack_end__ = .;
         __irq_stack_start__ = . + __IRQ_STACK_SIZE;
-        __fc_stack_end__ = . + __IRQ_STACK_SIZE;
-        __fc_stack_start__ = . + __IRQ_STACK_SIZE + __FC_STACK_SIZE;
     } > FC_tcdm
 
     __heapfcram_size = LENGTH(FC_tcdm) + ORIGIN(FC_tcdm) - __heapfcram_start - __FC_STACK_SIZE - __IRQ_STACK_SIZE;
