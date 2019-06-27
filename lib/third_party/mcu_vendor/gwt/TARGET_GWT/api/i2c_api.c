@@ -117,14 +117,15 @@ int i2c_write(i2c_t *obj, int address, const char *data, int length, int stop)
 
 int i2c_byte_read(i2c_t *obj, int last)
 {
-    I2C_ByteRead(i2c_address[obj->i2c.instance], slave_address, &i2c_reg_value, last);
+    I2C_Read(i2c_address[obj->i2c.instance], slave_address, (char *)&i2c_reg_value, 1, last);
 
     return i2c_reg_value;
 }
 
 int i2c_byte_write(i2c_t *obj, int data){
 
-    return I2C_ByteWrite(i2c_address[obj->i2c.instance], slave_address, (uint8_t) data, 1);
+    return I2C_ByteWrite(i2c_address[obj->i2c.instance], (uint8_t)data);
+
 }
 
 /**@}*/

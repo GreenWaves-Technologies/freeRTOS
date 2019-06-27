@@ -227,27 +227,11 @@ status_t I2C_Wait(I2C_Type *base, uint8_t ncycles);
  * This function is used to send a byte of data to a I2C slave peripheral. It uses blocking API.
  *
  * @param base           I2C base pointer.
- * @param address        Address of the target.
  * @param data           Byte to write.
- * @param stop           Stop command at the end of the transaction.
  *
  * @return Return uStatus_Success if the write operation is successful, an error otherwise.
  */
-status_t I2C_ByteWrite(I2C_Type *base, uint32_t address, uint8_t data, uint8_t stop);
-
-/*!
- * @brief Read a byte from a I2C slave peripheral.
- *
- * This function is used to read a byte of data from a I2C slave peripheral. It uses blocking API.
- *
- * @param base           I2C base pointer.
- * @param address        Address of the target.
- * @param data           Buffer to copy data.
- * @param stop           Stop command at the end of the transaction.
- *
- * @return Return uStatus_Success if the read operation is successful, an error otherwise.
- */
-status_t I2C_ByteRead(I2C_Type *base, uint32_t address, uint8_t *data, uint8_t stop);
+status_t I2C_ByteWrite(I2C_Type *base, uint8_t data);
 
 /*!
  * @brief Write data to a I2C slave peripheral.

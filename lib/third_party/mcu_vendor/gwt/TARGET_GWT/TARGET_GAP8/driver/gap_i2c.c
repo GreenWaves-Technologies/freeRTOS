@@ -115,7 +115,7 @@ status_t I2C_Stop(I2C_Type *base)
                                 NULL, 0);
 }
 
-status_t I2C_ByteWrite(I2C_Type *base, uint32_t address, uint8_t data, uint8_t stop)
+status_t I2C_ByteWrite(I2C_Type *base, uint8_t data)
 {
     uint32_t index = 0;
 

@@ -63,8 +63,6 @@ int GAP_IMPORT printf(const char *format, ...);
 int GAP_IMPORT puts(const char *s);
 int sprintf(char *str, const char *format, ...);
 void uart_putc(char  c);
-void abort();
-
 
 /* @} */
 

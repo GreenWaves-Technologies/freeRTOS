@@ -50,7 +50,7 @@ void HardFault_Handler( void )
 
 void vSetPendSV()
 {
-    NVIC->MASK_IRQ_OR = (0x1 << PendSV_IRQn);
+    NVIC_EnableIRQ(PendSV_IRQn);
     EU_FC_EVT_TrigSet(PendSV_IRQn, 0);
 }
 
