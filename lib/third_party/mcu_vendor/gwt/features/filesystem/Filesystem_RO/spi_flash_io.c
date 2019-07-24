@@ -212,8 +212,6 @@ int32_t SPI_FLASH_Init( PinName mosi, PinName miso, PinName sclk, PinName ssel,
     /* Flash Configuration. */
     SPI_FLASH_Conf( qspi );
     syncPolling = polling;
-    if( qspi && !master_config.whichCsn )
-        printf("SPI Flash ID = %x\n", SPI_FLASH_Id());
 
     return 0;
 }
