@@ -45,9 +45,9 @@
 #endif
 
 /* GAP8 specifics. */
-#include "GAP8.h"
+#include "pmsis_targets.h"
 
-extern uint32_t SystemCoreClock;
+extern volatile uint32_t SystemCoreClock;
 extern void vPrvAssertFailed( const char *filename, uint32_t line, const char *expr );
 
 /*
@@ -57,13 +57,10 @@ extern void vPrvAssertFailed( const char *filename, uint32_t line, const char *e
  * Call vPortDefineHeapRegions( xHeapRegions ) in the main function in order to
  * allocate memeory.
  */
-#ifdef NOSTDMALLOC
-#define malloc                                    ( pvPortMalloc )
-#define free                                      ( vPortFree )
-#else
-#define pvPortMalloc                              ( malloc )
-#define vPortFree                                 ( free )
-#endif
+//#define malloc                                    ( pmsis_malloc )
+//#define free                                      ( pmsis_malloc_free )
+#define pvPortMalloc                              ( pmsis_malloc )
+#define vPortFree                                 ( pmsis_malloc_free )
 
 /* Thread local storage. */
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS   ( 0 )

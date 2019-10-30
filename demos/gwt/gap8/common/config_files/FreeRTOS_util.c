@@ -34,6 +34,7 @@
 
 /* FreeRTOS functions includes. */
 #include "FreeRTOS_util.h"
+#include "pmsis_eu.h"
 
 /****************************************************************************/
 
@@ -58,35 +59,10 @@ HeapRegion_t xHeapRegions[] =
 #if configUSE_IDLE_HOOK == 1
 void vApplicationIdleHook( void )
 {
-    uint8_t taskState = 0;
-    uint8_t taskReRuBl = 0;
-    char *taskname = pcTaskGetName( NULL );
-    uint32_t nbTasks = ( uint32_t ) uxTaskGetNumberOfTasks();
-#if configUSE_TIMERS == 1
-    nbTasks--;
-#endif
-    taskSuspended = 0;
-    for( uint32_t i = 0; i < nbTasks-1; i++ )
+    while(1)
     {
-	taskState = eTaskGetState( tasks[i] );
-	taskSuspended = ( taskState == eSuspended ) ? taskSuspended + 1 : taskSuspended;
-        if( ( taskState == eRunning ) ||
-            ( taskState == eReady ) ||
-            ( taskState == eBlocked ) )
-            taskReRuBl++;
-    }
-    if( taskReRuBl == 0 )
-    {
-        for( uint32_t i = 0; i < taskSuspended; i++)
-            vTaskDelete( tasks[i] );
-        exit(0);
-    }
-    if( taskSuspended == nbTasks-1 )
-    {
-	printf("%s deleting suspended tasks and exiting.\n\n", taskname);
-        for( uint32_t i = 0; i < taskSuspended; i++)
-            vTaskDelete( tasks[i] );
-        exit(0);
+        hal_eu_evt_wait();
+        //hal_eu_evt_mask_wait(0xFFFFFFFF);
     }
 }
 #endif //configUSE_IDLE_HOOK

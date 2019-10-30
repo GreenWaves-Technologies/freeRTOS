@@ -1,15 +1,17 @@
 # FreeRTOS
+![FreeRTOS]( ../../docs/freertos/images/freertos.png "FreeRTOS")
 
-This is a port of FreeRTOS( v. 10.0.1 ) to the RISC-V based GAP8, IoT Application Processor by [GreenWaves-Technologies](https://greenwaves-technologies.com).
+This is a port of FreeRTOS(v.10.2.1) to the RISC-V based GAP8, IoT Application Processor by [GreenWaves-Technologies](https://greenwaves-technologies.com).
 
 ## About FreeRTOS
 
 FreeRTOS is an RTOS designed for small and resource constrained microcontrollers, issued under MIT license. It was developed and maintened, since 2003, by Richard Barry and his Real Time Engineers Ltd. It is now under the aegis of [Amazon Web Services](https://aws.amazon.com/blogs/opensource/announcing-freertos-kernel-v10/) and became Amazon FreeRTOS since 2017. FreeRTOS still remains available under MIT license.
 Light and easily configurable, it supports multi-tasking, various synchronisation mechanism and communication between tasks, and many others features. You may refer to the official website to learn more about [FreeRTOS and its features](https://www.freertos.org/FreeRTOS_Features.html).
 
-The port files can be found in the *lib/FreeRTOS/portable/GCC/GAP8/* folder. The port is done editing those 3 files, essentially focused on FreeRTOS and not other stacks, such as FreeRTOS-Plus.
+The port files can be found in the *freertos_kernel/portable/GCC/RI5CY-GAP8/* folder. The port is done editing those 3 files, essentially focused on FreeRTOS.
 ```bash
-lib/FreeRTOS/portable/GCC/GAP8/:
+ll freertos_kernel/portable/GCC/RI5CY-GAP8/:
+chip_specific_extensions/     <---- This directory contains additional extensions definitions of GAP8.
 port_asm.S
 port.c
 portmacro.h
@@ -21,17 +23,17 @@ The FreeRTOS project is organised as follows :
 ```bash
 freeRTOS
 ├── demos
-|   └── gwt                     <- Contains a "Hello World" demo
-└── lib
-    ├── FreeRTOS                <- Contains FreeRTOS kernel source code, and port source files
-    ├── include                 <- Contains FreeRTOS kernel headers and macros
-    └── third_party
-        └── mcu_vendor/gwt      <- Contains drivers and GAPUINO features code
-
+|   └── gwt            <--- "Hello World" demo
+├── freertos_kernel    <--- FreeRTOS kernel source code
+|    ├── include       <--- FreeRTOS kernel headers and macros
+|    ├── License       <--- FreeRTOS License file
+|    └── portable      <--- FreeRTOS port source files
+└── vendors            <--- Vendors specific drivers & libraries
+     └── gwt
 ```
 
 There are several demos and examples available to present FreeRTOS' and GAPUINO's features.
-Those demos can be found in the [*gap_sdk*](https://github.com/GreenWaves-Technologies/gap_sdk/tree/master/examples).
+Those demos can be found in the [*gap_sdk*](https://github.com/GreenWaves-Technologies/gap_sdk/tree/master).
 
 
 ## API Reference and Documentation
